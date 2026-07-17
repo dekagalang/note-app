@@ -2,8 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
+const { loadMarked } = require('./lib/marked');
 const yaml = require('js-yaml');
 const { db } = require('./knex');
 const { processNoteImage } = require('./utils/imageProcessing');
@@ -286,6 +286,7 @@ function stripBlockWhitespace(root) {
 function obsidianMarkdownToHtml(md) {
   if (!md || !md.trim()) return '';
   const preprocessed = preProcessObsidian(md);
+  const marked = loadMarked();
   const rawHtml = marked.parse(preprocessed, { gfm: true, breaks: false });
   const dom = new JSDOM(`<!DOCTYPE html><body>${rawHtml}</body>`);
   const doc = dom.window.document;

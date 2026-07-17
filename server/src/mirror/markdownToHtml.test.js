@@ -90,6 +90,13 @@ describe('markdownToHtml', () => {
 });
 
 describe('markdownToHtml unit behaviours', () => {
+  test('the marked loader resolves the CommonJS-compatible bundle', () => {
+    const { loadMarked } = require('../lib/marked');
+    const marked = loadMarked();
+    expect(typeof marked.parse).toBe('function');
+    expect(marked.parse('**hi**')).toContain('<strong>hi</strong>');
+  });
+
   test('a single tag mention becomes a tag-mention span', () => {
     const html = markdownToHtml('a #work item');
     expect(html).toContain('data-type="tag-mention"');

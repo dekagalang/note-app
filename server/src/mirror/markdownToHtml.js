@@ -1,7 +1,7 @@
 'use strict';
 
-const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
+const { loadMarked } = require('../lib/marked');
 
 // Inverse of htmlToMarkdown: turn a mirrored note's Markdown body back into the
 // Tiptap HTML shape stored in notes.content. Pure function: no DB access.
@@ -37,6 +37,7 @@ function markdownToHtml(md, options = {}) {
   const opts = { ...DEFAULTS, ...options };
   if (!md || !md.trim()) return '';
 
+  const marked = loadMarked();
   const rawHtml = marked.parse(md, { gfm: true, breaks: false });
   const dom = new JSDOM(`<!DOCTYPE html><body>${rawHtml}</body>`);
   const doc = dom.window.document;

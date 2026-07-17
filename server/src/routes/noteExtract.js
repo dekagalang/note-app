@@ -2,8 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const { chromium: rawChromium } = require('playwright-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const { marked } = require('marked');
 const { JSDOM } = require('jsdom');
+const { loadMarked } = require('../lib/marked');
 const { Readability } = require('@mozilla/readability');
 const ogs = require('open-graph-scraper');
 const UserObject = require('../models/UserObject');
@@ -243,6 +243,7 @@ async function extractViaJina(url) {
     const title = data?.title || '';
     const markdown = data?.content || '';
     if (!markdown) throw new Error('Jina Reader returned no content.');
+    const marked = loadMarked();
     const html = marked.parse(markdown);
     return { title, content: html };
 }
