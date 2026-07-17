@@ -1,0 +1,2 @@
+[deploy.envs]
+NIXPACKS_NODE_VERSION = "22"
