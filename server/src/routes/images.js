@@ -2,6 +2,7 @@ const express = require('express');
 const NoteImage = require('../models/NoteImage');
 const Note = require('../models/Note');
 const demoReset = require('../services/demoReset');
+const storageService = require('../services/storage.service');
 const { processNoteImage } = require('../utils/imageProcessing');
 const router = express.Router();
 
@@ -60,8 +61,28 @@ router.get('/images/:id/raw', async (req, res) => {
   try {
     const image = await NoteImage.findById(req.params.id);
 
-    if (!image || !image.data) {
+    if (!image) {
       return res.status(404).json({ message: 'Image not found' });
+    }
+
+    if (image.storage_path && image.storage_bucket) {
+      try {
+        const uploaded = await storageService.download(image.storage_bucket, image.storage_path);
+        const buffer = Buffer.isBuffer(uploaded)
+          ? uploaded
+          : Buffer.from(await uploaded.arrayBuffer());
+
+        res.set('Content-Type', image.type || 'application/octet-stream');
+        res.set('Cache-Control', 'private, max-age=31536000, immutable');
+        res.set('Content-Length', String(buffer.length));
+        return res.send(buffer);
+      } catch (storageError) {
+        console.error('Error downloading image from Supabase storage:', storageError);
+      }
+    }
+
+    if (!image.data) {
+      return res.status(404).json({ message: 'Image data is not available' });
     }
 
     // Stored `data` is a data URL: data:<mime>;base64,<payload>
@@ -132,6 +153,24 @@ router.post('/notes/:noteId/images', async (req, res) => {
       return res.status(415).json({ message: 'Unsupported or corrupt image data' });
     }
 
+    let storageMeta = null;
+    try {
+      const base64Payload = processed.data.includes(',')
+        ? processed.data.split(',')[1]
+        : processed.data;
+      const buffer = Buffer.from(base64Payload, 'base64');
+      storageMeta = await storageService.uploadBufferToStorage(
+        buffer,
+        noteId,
+        name || `note-image-${Date.now()}`,
+        processed.type || type || 'image/png'
+      );
+      console.log('Image uploaded to storage successfully:', storageMeta);
+    } catch (storageError) {
+      console.error('Supabase storage upload failed for note image:', storageError.message);
+      return res.status(503).json({ message: 'Image storage upload failed', error: storageError.message });
+    }
+
     try {
       const image = await NoteImage.create({
         note_id: noteId,
@@ -139,12 +178,14 @@ router.post('/notes/:noteId/images', async (req, res) => {
         thumbnail: processed.thumbnail,
         name: name || null,
         type: processed.type,
-        size: processed.size
+        size: processed.size,
+        storage_path: storageMeta?.path || null,
+        storage_bucket: storageMeta?.bucket || null,
       });
       
       console.log('Image created successfully, ID:', image.id);
       
-      res.status(201).json({ image });
+      res.status(201).json({ image, storage: storageMeta });
     } catch (dbError) {
       console.error('Database error when creating image:', dbError);
       throw dbError;
@@ -158,11 +199,21 @@ router.post('/notes/:noteId/images', async (req, res) => {
 // Delete an image
 router.delete('/images/:id', async (req, res) => {
   try {
-    const image = await NoteImage.delete(req.params.id);
-    
-    if (!image) {
+    const existingImage = await NoteImage.findById(req.params.id);
+
+    if (!existingImage) {
       return res.status(404).json({ message: 'Image not found' });
     }
+
+    if (existingImage.storage_path && existingImage.storage_bucket) {
+      try {
+        await storageService.deleteFile(existingImage.storage_bucket, existingImage.storage_path);
+      } catch (storageError) {
+        console.warn('Failed to remove image from Supabase storage:', storageError.message);
+      }
+    }
+
+    const image = await NoteImage.delete(req.params.id);
     
     res.json({ message: 'Image deleted successfully', image });
   } catch (error) {

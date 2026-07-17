@@ -297,7 +297,12 @@ async function ensureJwtSecret() {
 async function startServer(retryCount = 0, maxRetries = 10) {
   try {
     await initDb();
-    // await runMigrations();
+    try {
+      await runMigrations();
+      console.log('[migrations] Applied pending database migrations');
+    } catch (err) {
+      console.error('[migrations] Failed to apply migrations:', err.message);
+    }
     // Idempotent data migration: rewrite any inline base64 note images into
     // lightweight note_images references. A no-op once there's nothing inline.
     try {

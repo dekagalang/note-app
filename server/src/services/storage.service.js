@@ -8,16 +8,41 @@ function buildPath(noteId, filename) {
   return `notes/${noteId}/${crypto.randomUUID()}-${safeName}`;
 }
 
+function getExtensionFromMime(mimetype) {
+  const map = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+    'application/pdf': 'pdf',
+    'text/plain': 'txt',
+    'text/markdown': 'md',
+    'text/csv': 'csv',
+  };
+
+  return map[mimetype] || 'bin';
+}
+
 async function upload(file, noteId) {
   if (!supabase) {
     throw new Error('Supabase storage is not configured.');
   }
 
-  const path = buildPath(noteId, file.originalname);
+  return uploadBufferToStorage(file.buffer, noteId, file.originalname, file.mimetype);
+}
+
+async function uploadBufferToStorage(buffer, noteId, filename, mimetype) {
+  if (!supabase) {
+    throw new Error('Supabase storage is not configured.');
+  }
+
+  const safeName = (filename || `file.${getExtensionFromMime(mimetype)}`).replace(/[^a-zA-Z0-9._-]+/g, '_');
+  const path = buildPath(noteId, safeName);
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file.buffer, {
-      contentType: file.mimetype,
+    .upload(path, buffer, {
+      contentType: mimetype,
       upsert: false
     });
 
@@ -62,6 +87,7 @@ async function createSignedUrl(bucket, path, expiresInSeconds = 60) {
 
 module.exports = {
   upload,
+  uploadBufferToStorage,
   download,
   deleteFile,
   createSignedUrl,

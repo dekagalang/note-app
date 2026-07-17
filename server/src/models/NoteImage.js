@@ -30,12 +30,22 @@ class NoteImage {
 
   // Create a new image
   static async create(imageData) {
-    const { note_id, data, thumbnail, name, type, size } = imageData;
+    const {
+      note_id,
+      data,
+      thumbnail,
+      name,
+      type,
+      size,
+      storage_path = null,
+      storage_bucket = null,
+      storage_url = null,
+    } = imageData;
     try {
       console.log('Creating image with note_id:', note_id, 'type:', typeof note_id);
       const result = await db.query(
-        'INSERT INTO note_images (note_id, data, thumbnail, name, type, size) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [note_id, data, thumbnail, name, type, size]
+        'INSERT INTO note_images (note_id, data, thumbnail, name, type, size, storage_path, storage_bucket, storage_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [note_id, data, thumbnail, name, type, size, storage_path, storage_bucket, storage_url]
       );
       return result.rows[0];
     } catch (error) {
