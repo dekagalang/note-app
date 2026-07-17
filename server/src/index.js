@@ -3,7 +3,6 @@ const https = require('https');
 const http = require('http'); // Import http module
 const fs = require('fs');       // <--- Import File System module
 const path = require('path');     // <--- Import Path module
-const socketIo = require('socket.io');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
@@ -71,23 +70,9 @@ if (useHttps) {
   server = http.createServer(app);
 }
 
-// --- Attach Socket.IO to the Server ---
-// Socket.IO works with an https server instance just fine
-const io = socketIo(server, {
-  cors: {
-    origin: '*', // Consider restricting this in production later
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-  },
-  pingInterval: 10000,
-  pingTimeout: 5000,
-  connectTimeout: 60000,
-  upgradeTimeout: 30000,
-  maxHttpBufferSize: 5e6,
-  transports: ['websocket', 'polling']
-});
-// -----------------------------------------
-
-// Make io available to routes
+// Realtime websocket support is disabled on this machine, so the server
+// keeps the integration point available but does not start a socket.io server.
+const io = null;
 app.set('io', io);
 
 // Middleware
@@ -193,83 +178,6 @@ app.post('/mcp', requireMcpEnabled, allowMcpQueryToken, authenticateToken, handl
 app.get('/mcp', requireMcpEnabled, allowMcpQueryToken, authenticateToken, handleMcpUnsupported);
 app.delete('/mcp', requireMcpEnabled, allowMcpQueryToken, authenticateToken, handleMcpUnsupported);
 
-// Gate every socket connection behind the same JWT as the REST API. Without
-// this, anyone reaching the port could listen to io.emit broadcasts and stream
-// the user's notes in real time without authenticating.
-io.use((socket, next) => {
-  const token = socket.handshake.auth?.token
-    || socket.handshake.headers?.authorization?.split(' ')[1];
-  if (!token) {
-    return next(new Error('Authentication required'));
-  }
-  try {
-    socket.user = jwt.verify(token, getJwtSecret());
-    next();
-  } catch (err) {
-    next(new Error('Invalid token'));
-  }
-});
-
-// Proxy agent namespace — outbound-only tunnel for fetching URLs through
-// the user's local machine (bypasses datacenter IP blocks). Token is read
-// from process.env at connect time so it picks up changes made via settings
-// modal without requiring a server restart.
-const proxyNs = io.of('/proxy');
-proxyNs.use((socket, next) => {
-  const token = socket.handshake.auth?.token;
-  const proxyToken = process.env.PROXY_TOKEN;
-  const proxyEnabled = process.env.PROXY_ENABLED === 'true';
-  if (!proxyEnabled || !proxyToken || !token || token !== proxyToken) {
-    return next(new Error('Proxy not configured or invalid token'));
-  }
-  next();
-});
-proxyNs.on('connection', (socket) => {
-  proxyHub.attach(socket);
-});
-
-// Socket.io events (keep as is)
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-
-  socket.onAny((event, ...args) => {
-    // Maybe reduce logging noise in production
-    // if (process.env.NODE_ENV !== 'production') {
-    //   console.log(`[SERVER] Socket ${socket.id} emitted '${event}':`, args);
-    // }
-  });
-
-  socket.on('join', (room) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
-  });
-
-  socket.on('leave', (room) => {
-    socket.leave(room);
-    console.log(`Socket ${socket.id} left room: ${room}`);
-  });
-
-  socket.on('test_event', (data) => {
-    console.log(`[SERVER] Received test event from ${socket.id}:`, data);
-    socket.emit('test_response', { message: 'Direct response to sender' });
-    io.emit('broadcast_test', { message: 'Broadcast to all clients' });
-  });
-
-  socket.on('keep_alive', (data) => {
-    if (Math.random() < 0.1) {
-      // console.log(`Keep-alive ping from ${socket.id}:`, data);
-    }
-    socket.emit('keep_alive_response', {
-      timestamp: Date.now(),
-      serverReceived: data.timestamp,
-      latency: data.timestamp ? Date.now() - data.timestamp : null
-    });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
 
 // Auto-generate JWT_SECRET on first startup so users don't have to.
 // Precedence: explicit .env value > previously generated DB value > new random.

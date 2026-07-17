@@ -47,7 +47,6 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "rrule": "^2.8.1",
     "sharp": "^0.34.2",
-    "socket.io": "^4.7.2",
     "turndown": "^7.2.4",
     "unzipper": "^0.12.3",
     "zod": "^3.25.76"
