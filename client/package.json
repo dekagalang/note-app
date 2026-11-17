@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Client for itsnotes",
   "scripts": {
+    "dev": "vite --host",
     "start": "vite --host",
     "build": "vite build --mode development",
     "build:prod": "vite build --mode production",

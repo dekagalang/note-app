@@ -452,14 +452,16 @@ router.put('/:id', limitNoteSizeInDemo, async (req, res) => {
     }
 
     // Sync object cards to note_objects table
-    if (contentActuallyChanged && incomingContent) {
-      try {
-        const UserObject = require('../models/UserObject');
-        const objectIds = extractObjectCardIds(incomingContent);
-        await UserObject.syncNoteLinks(noteId, objectIds);
-      } catch (error) {
-        console.error(`[Object Links] Error syncing object links for note ${noteId}:`, error);
-        // Don't fail the whole update if object syncing fails
+    if (contentActuallyChanged) {
+      if (incomingContent) {
+        try {
+          const UserObject = require('../models/UserObject');
+          const objectIds = extractObjectCardIds(incomingContent);
+          await UserObject.syncNoteLinks(noteId, objectIds);
+        } catch (error) {
+          console.error(`[Object Links] Error syncing object links for note ${noteId}:`, error);
+          // Don't fail the whole update if object syncing fails
+        }
       }
 
       // Sync URL link previews

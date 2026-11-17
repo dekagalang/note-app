@@ -582,7 +582,8 @@ const TiptapEditor = forwardRef(({
     }),
     Link.configure({
       openOnClick: true,
-      autolink: true,
+      autolink: false,
+      linkOnPaste: true,
       inclusive: false, // Don't extend link to text typed after it
       validate: href => {
         try {

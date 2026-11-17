@@ -241,6 +241,12 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []); // Empty dependency array - only run once
 
+  const persistAuthenticatedToken = (authToken) => {
+    localStorage.setItem('authToken', authToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    setToken(authToken);
+  };
+
   const login = async (username, password) => {
     try {
       const response = await fetch(`${env.API_BASE_URL}/auth/login`, {
@@ -254,7 +260,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         console.log('AuthContext: Login successful, setting token:', !!data.token);
-        setToken(data.token);
+        persistAuthenticatedToken(data.token);
         setUser(data.user);
         setIsAuthenticated(true);
         setRequiresSetup(false);
@@ -287,7 +293,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setToken(data.token);
+        persistAuthenticatedToken(data.token);
         setUser(data.user);
         setIsAuthenticated(true);
         setRequiresSetup(false);

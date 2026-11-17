@@ -2007,9 +2007,13 @@ const Header = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (window.searchTimeout) {
+                        clearTimeout(window.searchTimeout);
+                        window.searchTimeout = null;
+                      }
                       setLocalSearchInput(''); // Clear local input
-                      setLastExecutedSearchQuery(''); // Also clear the last executed query state
-                      // Don't call handleSearch('') here as it would exit search mode.
+                      setLastExecutedSearchQuery('');
+                      handleSearch('');
                       // Add delay before focusing to avoid mobile focus behavior issues
                       setTimeout(() => {
                         if (searchInputRef.current) {
