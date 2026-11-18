@@ -205,6 +205,8 @@ const AddContentDropdown = ({
   onAddAttachment = null,
   onAddClipboardUrl = null,
   onAddReminder = null,
+  onOpenReminderPicker = null,
+  canSetLocalReminder = false,
   onSummarizeWithAI = null,
   onInsertOCR = null,
   clipboardUrlPreview = null,
@@ -507,6 +509,13 @@ const AddContentDropdown = ({
     onClose();
   };
 
+  const handleSetReminderClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    if (onOpenReminderPicker) onOpenReminderPicker();
+  };
+
   if (!shouldRender) return null;
 
   const isMobile = window.innerWidth <= 768;
@@ -572,6 +581,16 @@ const AddContentDropdown = ({
             <Icon name="notes" size={18} />
             Add Note
           </DropdownItem>
+          {canSetLocalReminder && (
+          <DropdownItem
+            onClick={handleSetReminderClick}
+            theme={isDarkTheme ? 'dark' : 'light'}
+            data-add-content-dropdown="item"
+          >
+            <Icon name="bell" size={18} />
+            Set Reminder
+          </DropdownItem>
+          )}
           {aiEnabled && <>
           <DropdownItem
             onClick={handleCreateReminderClick}
@@ -713,6 +732,16 @@ const AddContentDropdown = ({
           <Icon name="notes" size={18} />
           Add Note
         </DropdownItem>
+        {canSetLocalReminder && (
+        <DropdownItem
+          onClick={handleSetReminderClick}
+          theme={isDarkTheme ? 'dark' : 'light'}
+          data-add-content-dropdown="item"
+        >
+          <Icon name="bell" size={18} />
+          Set Reminder
+        </DropdownItem>
+        )}
         {aiEnabled && <>
         <DropdownItem
           onClick={handleCreateReminderClick}

@@ -275,13 +275,13 @@ const DynamicActionBarsWrapper = React.memo(forwardRef((props, ref) => {
       onToggleSticky={onToggleSticky}
       onCloseClipboardDropdown={onCloseClipboardDropdown}
       hasClipboardHistory={hasClipboardHistory}
-      suggestedTags={suggestedTags}
-      onAcceptSuggestedTag={onAcceptSuggestedTag}
-      onDismissSuggestedTag={onDismissSuggestedTag}
       canSetLocalReminder={canSetLocalReminder}
       reminderAt={reminderAt}
       reminderEnabled={reminderEnabled}
       onOpenReminderPicker={onOpenReminderPicker}
+      suggestedTags={suggestedTags}
+      onAcceptSuggestedTag={onAcceptSuggestedTag}
+      onDismissSuggestedTag={onDismissSuggestedTag}
     />
       <BottomActionContainer
         style={bottomActionStyle}

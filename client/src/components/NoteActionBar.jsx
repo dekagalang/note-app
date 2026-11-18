@@ -1050,18 +1050,6 @@ export const NoteActionBar = ({
               theme={isDarkTheme ? 'dark' : 'light'}
             >
               <Icon name="tag" size={20} />
-            </SharedActionButton>            <SharedActionButton
-              type="button"
-              title={reminderEnabled && reminderAt ? `Reminder: ${new Date(reminderAt).toLocaleString()}` : 'Set reminder'}
-              aria-label={reminderEnabled ? 'Edit reminder' : 'Set reminder'}
-              onClick={onOpenReminderPicker}
-              theme={isDarkTheme ? 'dark' : 'light'}
-              style={{ display: isMobile && canSetLocalReminder ? 'flex' : 'none' }}
-            >
-              <Icon name="bell" size={20} />
-              {reminderEnabled && (
-                <span style={{ position: 'absolute', top: 7, right: 7, width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-color, #3978d4)' }} />
-              )}
             </SharedActionButton>
             <SharedActionButton
               ref={colorButtonRef} // Attach color ref
@@ -1098,6 +1086,8 @@ export const NoteActionBar = ({
                 onAddNote={onAddNote}
                 onAddAttachment={onAddAttachment}
                 onAddReminder={onAddReminder} // Pass new prop
+                onOpenReminderPicker={onOpenReminderPicker}
+                canSetLocalReminder={canSetLocalReminder}
                 onInsertOCR={onInsertOCR} // Pass new prop
                 hasReminderIntent={hasReminderIntent} // Pass intent flag
                 onSummarizeWithAI={onSummarizeWithAI}
