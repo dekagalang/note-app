@@ -56,6 +56,10 @@ const DynamicActionBarsWrapper = React.memo(forwardRef((props, ref) => {
     onAddSketch,
     onAddAttachment,
     onAddReminder, // Add missing prop
+    canSetLocalReminder,
+    reminderAt,
+    reminderEnabled,
+    onOpenReminderPicker,
     onInsertOCR, // New prop
     onAddClipboardUrl,
     onCloseAddContentDropdown,
@@ -274,6 +278,10 @@ const DynamicActionBarsWrapper = React.memo(forwardRef((props, ref) => {
       suggestedTags={suggestedTags}
       onAcceptSuggestedTag={onAcceptSuggestedTag}
       onDismissSuggestedTag={onDismissSuggestedTag}
+      canSetLocalReminder={canSetLocalReminder}
+      reminderAt={reminderAt}
+      reminderEnabled={reminderEnabled}
+      onOpenReminderPicker={onOpenReminderPicker}
     />
       <BottomActionContainer
         style={bottomActionStyle}

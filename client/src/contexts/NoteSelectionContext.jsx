@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { useLocation } from 'react-router-dom';
 import { saveAs } from 'file-saver';
 import { notesApi, tagsApi } from '../services/api';
+import { cancelReminder, reconcileReminders } from '../features/reminders/reminderService';
 import { useTags } from './TagsContext';
 import { useNotes } from './NotesContext';
 
@@ -290,6 +291,7 @@ export const NoteSelectionProvider = ({ children }) => {
         });
       };
         await _executeBulkAction('trash', notesApi.bulkTrashNotes, updateFn);
+        await Promise.all(ids.map(cancelReminder));
       
       // Capture the trashed notes (+ their positions) so undo can restore them
       // in place instead of refetching the whole search.
@@ -323,7 +325,8 @@ export const NoteSelectionProvider = ({ children }) => {
     const updateFn = (ids) => {
       ids.forEach(id => notesContextRef.current._updateOrRemoveNoteInState(id));
     };
-    _executeBulkAction('restore', notesApi.bulkRestoreNotes, updateFn).then(() => {
+    _executeBulkAction('restore', notesApi.bulkRestoreNotes, updateFn).then(async () => {
+      await reconcileReminders(await notesApi.getUpcomingReminders());
       // Show success toast after successful operation
       notesContextRef.current.notifyRestored(ids.length);
       // Refresh search count if in search mode
@@ -391,6 +394,7 @@ export const NoteSelectionProvider = ({ children }) => {
         archivedIds.forEach(id => notesContextRef.current._updateOrRemoveNoteInState(id));
           // Send to trash via API
         await notesApi.bulkTrashNotes(archivedIds);
+          await Promise.all(archivedIds.map(cancelReminder));
         console.log(`Successfully moved ${archivedIds.length} archived notes to trash`);
         
         // Show success toast for trashed archived notes (with Undo)
@@ -422,6 +426,7 @@ export const NoteSelectionProvider = ({ children }) => {
       };
         try {
         await _executeBulkAction('delete permanently', notesApi.bulkDeletePermanently, updateFn);
+        await Promise.all(deleteIds.map(cancelReminder));
         
         // Show success toast for permanently deleted notes
         notesContextRef.current.notifyDeleted(deleteIds.length);

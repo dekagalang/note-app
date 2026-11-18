@@ -8,8 +8,11 @@ import { TagsProvider } from './contexts/TagsContext';
 import { StarredNotesProvider } from './contexts/StarredNotesContext'; // Import StarredNotesProvider
 import { UIPreferencesProvider } from './contexts/UIPreferencesContext'; // Import UIPreferencesProvider
 import { AuthProvider } from './contexts/AuthContext'; // Import AuthProvider
+import { initializeReminderNotifications } from './features/reminders/reminderService';
 import './utils/console'; // Import console utility to disable logs in production
 import './index.css';
+
+initializeReminderNotifications();
 
 
 /*scan({

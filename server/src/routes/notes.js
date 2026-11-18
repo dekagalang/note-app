@@ -222,6 +222,17 @@ router.get('/month-counts', async (req, res) => {
   }
 });
 
+// Get upcoming reminders for native-device reconciliation
+router.get('/reminders', async (req, res) => {
+  try {
+    const reminders = await Note.findUpcomingReminders();
+    res.json({ reminders });
+  } catch (error) {
+    console.error('Error fetching upcoming reminders:', error);
+    res.status(500).json({ message: 'Error fetching upcoming reminders', error: error.message });
+  }
+});
+
 // Get a single note by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -245,7 +256,13 @@ router.get('/:id', async (req, res) => {
 // Create a new note
 router.post('/', limitNoteSizeInDemo, async (req, res) => {
   try {
-    const { title, content, is_pinned, color, created_at } = req.body;
+    const { title, content, is_pinned, color, created_at, reminder_at, reminder_enabled } = req.body;
+    if (reminder_at != null && Number.isNaN(Date.parse(reminder_at))) {
+      return res.status(400).json({ message: 'Invalid reminder date' });
+    }
+    if (reminder_enabled === true && !reminder_at) {
+      return res.status(400).json({ message: 'An active reminder requires a date and time' });
+    }
     if (!content && !title) {
       //return res.status(400).json({ message: 'Note must have a title or content' });
     }
@@ -255,7 +272,9 @@ router.post('/', limitNoteSizeInDemo, async (req, res) => {
       content: content || '',
       is_pinned: is_pinned || false,
       color: color || 'default',
-      created_at: created_at
+      created_at: created_at,
+      reminder_at: reminder_at || null,
+      reminder_enabled: reminder_enabled === true
     });
 
     // Sync object cards to note_objects table
@@ -349,7 +368,7 @@ router.post('/:id/duplicate', async (req, res) => {
 // Update a note
 router.put('/:id', limitNoteSizeInDemo, async (req, res) => {
   const noteId = req.params.id;
-  const { title, content, is_pinned, is_archived, is_deleted, color } = req.body;
+  const { title, content, is_pinned, is_archived, is_deleted, color, reminder_at, reminder_enabled } = req.body;
   const MAX_VERSIONS_TO_KEEP = 8; // Keep your existing constants
   const VERSION_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -360,6 +379,22 @@ router.put('/:id', limitNoteSizeInDemo, async (req, res) => {
     if (!currentNote) {
       return res.status(404).json({ message: 'Note not found for update' });
     }
+
+    if (reminder_at != null && Number.isNaN(Date.parse(reminder_at))) {
+      return res.status(400).json({ message: 'Invalid reminder date' });
+    }
+
+    const incomingReminderAt = reminder_at === undefined ? currentNote.reminder_at : reminder_at;
+    const incomingReminderEnabled = reminder_enabled === undefined
+      ? currentNote.reminder_enabled
+      : reminder_enabled === true;
+    if (incomingReminderEnabled && !incomingReminderAt) {
+      return res.status(400).json({ message: 'An active reminder requires a date and time' });
+    }
+    const normalizeReminderAt = value => value == null ? null : new Date(value).toISOString();
+    const reminderChanged =
+      normalizeReminderAt(incomingReminderAt) !== normalizeReminderAt(currentNote.reminder_at) ||
+      incomingReminderEnabled !== currentNote.reminder_enabled;
 
     // --- Version History Logic (Keep your existing logic here) ---
     let versionSaved = false;
@@ -423,7 +458,8 @@ router.put('/:id', limitNoteSizeInDemo, async (req, res) => {
          (color !== undefined && color !== currentNote.color) ||
          (is_pinned !== undefined && is_pinned !== currentNote.is_pinned) ||
          (is_archived !== undefined && is_archived !== currentNote.is_archived) ||
-         (is_deleted !== undefined && is_deleted !== currentNote.is_deleted);
+         (is_deleted !== undefined && is_deleted !== currentNote.is_deleted) ||
+         reminderChanged;
 
     // 8. Update the main 'notes' table ONLY if necessary (as you already do)
     if (needsMainTableUpdate) {
@@ -436,7 +472,9 @@ router.put('/:id', limitNoteSizeInDemo, async (req, res) => {
         is_pinned,
         is_archived,
         is_deleted,
-        color
+        color,
+        reminder_at: incomingReminderAt,
+        reminder_enabled: incomingReminderEnabled
         // Assuming Note.update handles undefined values correctly
       });
 

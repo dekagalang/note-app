@@ -1442,6 +1442,16 @@ class Note {
     return notes;
   }
 
+  static async findUpcomingReminders(now = new Date()) {
+    return db('notes')
+      .select('id', 'title', 'plain_content', 'reminder_at', 'reminder_enabled')
+      .where('reminder_enabled', true)
+      .where('is_deleted', false)
+      .whereNotNull('reminder_at')
+      .where('reminder_at', '>', now)
+      .orderBy('reminder_at', 'asc');
+  }
+
   static async create(noteData) {
     // Convert HTML content to plain text for search indexing
     const plainText = convertHtmlToPlainText(noteData.content || '');
@@ -1454,6 +1464,8 @@ class Note {
       is_pinned: noteData.is_pinned || false,
       is_archived: noteData.is_archived || false,
       is_deleted: noteData.is_deleted || false,
+      reminder_at: noteData.reminder_at || null,
+      reminder_enabled: noteData.reminder_enabled === true,
       created_at: noteData.created_at ? new Date(noteData.created_at) : new Date(),
       updated_at: noteData.created_at ? new Date(noteData.created_at) : new Date(),
       version: 1
@@ -1484,6 +1496,8 @@ class Note {
         is_pinned: false,
         is_archived: false,
         is_deleted: false,
+        reminder_at: source.reminder_at || null,
+        reminder_enabled: source.reminder_enabled === true,
         created_at: now,
         updated_at: now,
         version: 1

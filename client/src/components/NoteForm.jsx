@@ -7,6 +7,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react"; // Keep useRef
+import ReminderPicker from '../features/reminders/ReminderPicker';
 import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import { useNotes } from "../contexts/NotesContext";
 import { useTags } from "../contexts/TagsContext";
@@ -42,6 +43,7 @@ import { useInNoteSearch } from '../hooks/useInNoteSearch'; // Import the search
 import { useNoteFormInteractions } from '../hooks/useNoteFormInteractions'; // Import the UI interactions hook
 import { useKeyboardShortcut } from '../utils/keyboardShortcuts'; // Import the keyboard shortcuts hook
 import { useClipboardHistory } from '../hooks/useClipboardHistory'; // Import clipboard history hook
+import { isNativeReminderAvailable, requestReminderPermission } from '../features/reminders/reminderService';
 import { useNoteSummarizer } from '../hooks/useNoteSummarizer'; // Import the summarizer hook
 import { useNoteOCR } from '../hooks/useNoteOCR'; // Import the OCR hook
 import { useAttachmentManager } from '../hooks/useAttachmentManager'; // Import attachment manager hook
@@ -95,6 +97,10 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [color, setColor] = useState(note?.color || "default");
+  const [reminderAt, setReminderAt] = useState(note?.reminder_at || null);
+  const [reminderEnabled, setReminderEnabled] = useState(note?.reminder_enabled === true);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const canSetLocalReminder = isNativeReminderAvailable();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [titleFocused, setTitleFocused] = useState(false);
   const [isPinned, setIsPinned] = useState(note?.is_pinned || false);
@@ -652,6 +658,8 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
         commitContent(""); // Reset content (immediate, bypass debounce)
         setColor("default");
         setIsPinned(false);
+        setReminderAt(null);
+        setReminderEnabled(false);
         setContentFullyLoaded(false); // Explicitly mark as not loaded
       } else {
         // Normal initialization for real notes
@@ -679,6 +687,8 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
         commitContent(contentToSet);
         setColor(note?.color || "default");
         setIsPinned(note?.is_pinned || false);
+        setReminderAt(note?.reminder_at || null);
+        setReminderEnabled(note?.reminder_enabled === true);
 
         // For new notes, mark as fully loaded immediately
         // For existing notes that just finished loading, mark as fully loaded immediately (no delay)
@@ -779,6 +789,12 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
       setIsPinned(note.is_pinned);
     }
   }, [note?.id, note?.is_pinned]);
+
+  useEffect(() => {
+    if (!note || note.isLoading) return;
+    setReminderAt(note.reminder_at || null);
+    setReminderEnabled(note.reminder_enabled === true);
+  }, [note?.id, note?.isLoading, note?.reminder_at, note?.reminder_enabled]);
 
   // Live sync for color changes from external sources (e.g., socket updates from another window)
   // This effect only runs when note.color changes for the SAME note (not when note ID changes)
@@ -1027,6 +1043,10 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
       // `content` React state lags behind by up to CONTENT_DEBOUNCE_MS,
       // and useNoteSaver itself stashes the value param only on render.
       getCurrentContent: () => contentRef.current,
+      getCurrentReminder: () => ({
+        reminder_at: reminderEnabled ? reminderAt : null,
+        reminder_enabled: reminderEnabled,
+      }),
       // Callbacks
       onSaveStart: () => console.log('[NoteForm] Save started'),
       onSaveSuccess: (savedNote) => console.log('[NoteForm] Save successful:', savedNote?.id),
@@ -1039,6 +1059,25 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
       autoSaveInterval: AUTO_SAVE_INTERVAL,
     }
   );
+
+  const handleSaveReminder = useCallback(async ({ enabled, reminderAt: nextReminderAt }) => {
+    if (enabled && !(await requestReminderPermission())) {
+      showToast('Allow notifications to use note reminders.', { variant: 'warning' });
+      return false;
+    }
+    setReminderAt(enabled ? nextReminderAt : null);
+    setReminderEnabled(enabled);
+    markAsModified();
+    setShowReminderPicker(false);
+    return true;
+  }, [markAsModified, showToast]);
+
+  const handleRemoveReminder = useCallback(() => {
+    setReminderAt(null);
+    setReminderEnabled(false);
+    markAsModified();
+    setShowReminderPicker(false);
+  }, [markAsModified]);
 
   // Handle external content updates (e.g. from URL extraction)
   const handleExternalContentUpdate = useCallback((newContent) => {
@@ -2733,6 +2772,10 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
           onToggleSticky={toggleSticky}
           onCloseClipboardDropdown={() => setShowClipboardDropdown(false)}
           hasClipboardHistory={hasClipboardHistory}
+          canSetLocalReminder={canSetLocalReminder}
+          reminderAt={reminderAt}
+          reminderEnabled={reminderEnabled}
+          onOpenReminderPicker={() => setShowReminderPicker(true)}
           // Suggested tags props
           suggestedTags={suggestedTags}
           onAcceptSuggestedTag={handleAcceptSuggestedTag}
@@ -2784,6 +2827,15 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
           position="top-right"
         />
       )}
+      {showReminderPicker && canSetLocalReminder && (
+        <ReminderPicker
+          value={reminderAt}
+          enabled={reminderEnabled}
+          onSave={handleSaveReminder}
+          onRemove={handleRemoveReminder}
+          onClose={() => setShowReminderPicker(false)}
+        />
+      )}
     </FormOverlay>
   );
 }); // End of forwardRef
@@ -2797,10 +2849,12 @@ export default React.memo(NoteForm, (prevProps, nextProps) => {
   const isLoadingChanged = prevProps.note?.isLoading !== nextProps.note?.isLoading;
   const colorChanged = prevProps.note?.color !== nextProps.note?.color;
   const isPinnedChanged = prevProps.note?.is_pinned !== nextProps.note?.is_pinned;
+  const reminderChanged = prevProps.note?.reminder_at !== nextProps.note?.reminder_at ||
+    prevProps.note?.reminder_enabled !== nextProps.note?.reminder_enabled;
 
   const prevTagIds = (prevProps.note?.tags || []).map(t => t.id).sort().join(',');
   const nextTagIds = (nextProps.note?.tags || []).map(t => t.id).sort().join(',');
   const tagsChanged = prevTagIds !== nextTagIds;
 
-  return !noteIdChanged && !onCloseChanged && !isLoadingChanged && !colorChanged && !isPinnedChanged && !tagsChanged;
+  return !noteIdChanged && !onCloseChanged && !isLoadingChanged && !colorChanged && !isPinnedChanged && !reminderChanged && !tagsChanged;
 });

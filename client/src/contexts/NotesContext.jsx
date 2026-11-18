@@ -22,6 +22,7 @@ import { useSettings } from './SettingsContext';
 import { usePrefetch } from '../hooks/usePrefetch'; // Import prefetch hook
 import { useNavigationContext } from '../navigation/NavigationContext'; // Import navigation context
 import { doesNoteMatchSearchQuery as matchNoteSearchQuery } from '../utils/noteSearchMatch'; // Live-update search matcher
+import { cancelReminder, reconcileReminders, scheduleReminder } from '../features/reminders/reminderService';
 
 // --- Context Definition ---
 const NotesContext = createContext();
@@ -46,7 +47,9 @@ const notesArrayEqual = (a, b) => {
       x.id !== y.id ||
       x.updated_at !== y.updated_at ||
       x.is_pinned !== y.is_pinned ||
-      x.pinned_at !== y.pinned_at
+      x.pinned_at !== y.pinned_at ||
+      x.reminder_at !== y.reminder_at ||
+      x.reminder_enabled !== y.reminder_enabled
     ) {
       return false;
     }
@@ -1767,6 +1770,15 @@ export const NotesProvider = ({ children }) => {
         throw new Error("Invalid note data received from server after update.");
       }
       console.log(`[API Response] Update confirmed for note ${id}`);
+      try {
+        if (confirmedNote.is_deleted) {
+          await cancelReminder(id);
+        } else {
+          await scheduleReminder(confirmedNote);
+        }
+      } catch (reminderError) {
+        console.error(`[Reminder] Failed to sync notification for note ${id}:`, reminderError);
+      }
 
       // Update state with confirmed data from server
       // If the note is deleted, remove it from state instead of updating it
@@ -1961,6 +1973,8 @@ export const NotesProvider = ({ children }) => {
 
       // Then move to trash
       await notesApi.trashNote(id);
+  await notesApi.trashNote(id);
+  await cancelReminder(id);
 
       if (wasInSearchMode && currentSearchQuery) {
         await handleSearch(currentSearchQuery, true, false, null, false, true);
@@ -2006,6 +2020,9 @@ export const NotesProvider = ({ children }) => {
       
       // Then update server
       await notesApi.restoreNote(id);
+        await notesApi.restoreNote(id);
+        const restoredNote = await notesApi.getNoteById(id);
+        await scheduleReminder(restoredNote?.note || restoredNote);
       
       // Note: We don't need to loadNotes(true) anymore since _updateOrRemoveNoteInState
       // already removed the note from the UI. Doing a full refresh would replace
@@ -2186,6 +2203,8 @@ export const NotesProvider = ({ children }) => {
       
       // Then update server
       await notesApi.deleteNote(id);
+        await cancelReminder(id);
+        await reconcileReminders(await notesApi.getUpcomingReminders());
       
       if (searchModeRef.current && searchQueryRef.current) {
         await handleSearch(searchQueryRef.current, true, false);

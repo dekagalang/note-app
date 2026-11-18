@@ -25,6 +25,8 @@ import { ToastProvider, useToast } from './contexts/ToastContext'; // Import Toa
 import { COLORS } from './components/ColorPicker'; // Import COLORS for label translation
 import { NavigationProvider, useNavigation } from './navigation'; // Import new navigation system
 import noteFormSaveRegistry from './services/noteFormSaveRegistry'; // Global save function registry
+import { notesApi } from './services/api';
+import { isNativeReminderAvailable, reconcileReminders, setReminderOpenHandler } from './features/reminders/reminderService';
 import DemoBanner from './components/DemoBanner';
 import ColorPreloader from './components/ColorPreloader'; // Import color preloader for performance
 
@@ -153,7 +155,21 @@ const AppContent = () => {
 
   const { showQuickAccess, showNoteTabs, colorLabels, setAllColorLabels, layoutView, setPageBackgroundEnabled } = useUIPreferences();
   const { settings: serverSettings } = useSettings();
-  const { closeNote } = useNavigation(); // Get closeNote from NavigationContext
+  const { closeNote, openNote } = useNavigation(); // Get note navigation from NavigationContext
+
+  useEffect(() => {
+    const unregisterReminderHandler = setReminderOpenHandler((noteId) => {
+      openNote(noteId, 'direct-url', { replaceHistory: true });
+    });
+
+    if (isNativeReminderAvailable()) {
+      notesApi.getUpcomingReminders()
+        .then(reconcileReminders)
+        .catch(error => console.error('[Reminder] Reconciliation failed:', error));
+    }
+
+    return unregisterReminderHandler;
+  }, [openNote]);
 
   // Determine if we're in list view mode
   const isListView = layoutView === 'list';

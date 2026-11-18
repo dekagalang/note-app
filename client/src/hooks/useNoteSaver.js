@@ -88,7 +88,7 @@ export function useNoteSaver(
 
     // Delete an empty note only on a forced save (such as closing it). During
     // auto-save, persist the empty content so deleting the last text is saved.
-    if (isTextEmpty && !hasImages && isForced && noteData.id) {
+    if (isTextEmpty && !hasImages && !noteData.reminder_enabled && isForced && noteData.id) {
       console.log('[useNoteSaver] Empty existing note will be deleted on forced save:', noteData.id);
       return { shouldSave: true, action: 'delete' };
     }
@@ -98,6 +98,10 @@ export function useNoteSaver(
       const titleChanged = noteData.title !== initialNote.title;
       const contentChanged = noteData.content !== initialNote.content;
       const colorChanged = noteData.color !== initialNote.color;
+      const initialReminderAt = initialNote.reminder_at ? new Date(initialNote.reminder_at).getTime() : null;
+      const currentReminderAt = noteData.reminder_at ? new Date(noteData.reminder_at).getTime() : null;
+      const reminderAtChanged = initialReminderAt !== currentReminderAt;
+      const reminderEnabledChanged = (noteData.reminder_enabled === true) !== (initialNote.reminder_enabled === true);
       
       // Check for image changes
       const initialImages = initialNote.images || [];
@@ -105,7 +109,7 @@ export function useNoteSaver(
       const imagesChanged = initialImages.length !== currentImagesArray.length ||
         initialImages.some((img, index) => img.id !== currentImagesArray[index]?.id);
       
-      if (!titleChanged && !contentChanged && !colorChanged && !imagesChanged) {
+      if (!titleChanged && !contentChanged && !colorChanged && !imagesChanged && !reminderAtChanged && !reminderEnabledChanged) {
         return { shouldSave: false, action: 'none' };
       }
     }
@@ -248,6 +252,7 @@ export function useNoteSaver(
       content: liveContent,
       color: currentColorRef.current,
       images: currentImagesRef.current,
+      ...(callbacksRef.current?.getCurrentReminder?.() || {}),
       ...overrides
     };
 

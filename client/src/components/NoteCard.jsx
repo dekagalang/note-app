@@ -564,6 +564,20 @@ const LinkPreviewList = styled.div`
   `}
 `;
 
+const ReminderBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin: 4px 0 7px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: ${props => props.$overdue ? 'var(--warning-color, #b95b18)' : 'var(--text-color-secondary, var(--text-color))'};
+  background: ${props => props.$overdue ? 'rgba(185, 91, 24, 0.12)' : 'rgba(127, 127, 127, 0.1)'};
+  font-size: 11px;
+  line-height: 1.3;
+`;
+
 const UrlLink = styled(Tag)`
 
 `;
@@ -1083,6 +1097,9 @@ const NoteCard = memo(function NoteCard({ note, searchQuery, layoutView, onPicke
     [note.links]
   );
   const hasLinkPreviews = previewLinks.length > 0;
+  const reminderDate = note.reminder_enabled && note.reminder_at ? new Date(note.reminder_at) : null;
+  const reminderIsOverdue = reminderDate && reminderDate < new Date();
+  const reminderLabel = reminderDate && `${reminderDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${reminderDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
   // Images get cramped once there are three cards, so only show them for 1-2.
   const showLinkImages = previewLinks.length <= 2;
   // With more than one card, clamp each title/description to a single line.
@@ -1147,6 +1164,12 @@ const NoteCard = memo(function NoteCard({ note, searchQuery, layoutView, onPicke
           <ContentWrapper $layoutView={layoutView}>
             <Content ref={contentRef} dangerouslySetInnerHTML={{ __html: note.content }} />
           </ContentWrapper>
+        )}
+        {reminderDate && !Number.isNaN(reminderDate.getTime()) && (
+          <ReminderBadge $overdue={reminderIsOverdue} title={reminderDate.toLocaleString()}>
+            <Icon name="bell" size={12} />
+            <span>{reminderIsOverdue ? 'Overdue · ' : ''}{reminderLabel}</span>
+          </ReminderBadge>
         )}
         
         {/* Display images and sketches if any */}
@@ -1487,6 +1510,8 @@ const NoteCard = memo(function NoteCard({ note, searchQuery, layoutView, onPicke
   if (prevProps.note.title !== nextProps.note.title) return false;
   if (prevProps.note.color !== nextProps.note.color) return false;
   if (prevProps.note.is_pinned !== nextProps.note.is_pinned) return false;
+  if (prevProps.note.reminder_at !== nextProps.note.reminder_at) return false;
+  if (prevProps.note.reminder_enabled !== nextProps.note.reminder_enabled) return false;
   
   // Check update timestamp as a proxy for content changes
   if (prevProps.note.updated_at !== nextProps.note.updated_at) return false;

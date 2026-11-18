@@ -102,6 +102,11 @@ export const notesApi = {
     return response.data;
   },
 
+  getUpcomingReminders: async () => {
+    const response = await api.get('/notes/reminders');
+    return response.data.reminders || [];
+  },
+
   // Search notes
   searchNotes: async (query, page = 1, limit = 80, sortOrder = 'updatedAt_desc', includeDetails = true, truncateContent = true, contentLimit = 300, tagIdMap = null) => {
     // sortOrder can be 'updatedAt_desc', 'createdAt_asc', 'createdAt_desc'
