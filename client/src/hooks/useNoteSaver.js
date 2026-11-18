@@ -45,6 +45,7 @@ export function useNoteSaver(
   // and after each save. Keeping it as state would trigger a re-render and
   // tear down the auto-save interval on every keystroke.
   const lastSaveTimeRef = useRef(Date.now());
+   const modificationVersionRef = useRef(0);
   // Mirror isModified so markAsModified can stay completely stable.
   const isModifiedRef = useRef(false);
   isModifiedRef.current = isModified;
@@ -71,6 +72,7 @@ export function useNoteSaver(
   const markAsModified = useCallback(() => {
     // Bumping the ref on every keystroke is free; setIsModified only fires
     // the first time per typing session, and the callback itself is stable.
+     modificationVersionRef.current += 1;
     lastSaveTimeRef.current = Date.now();
     if (!isModifiedRef.current) setIsModified(true);
   }, []);
@@ -124,6 +126,7 @@ export function useNoteSaver(
    */
   const _performSave = useCallback(async (noteData, isForced = false) => {
     console.log('[useNoteSaver] _performSave called', { noteData, isForced });
+     const savedModificationVersion = modificationVersionRef.current;
 
     // Check if we should save
     const { shouldSave, action } = _shouldSave(noteData, isForced);
@@ -135,7 +138,7 @@ export function useNoteSaver(
       // This prevents auto-save timer from getting stuck in a loop
       if (isModifiedRef.current) {
         console.log('[useNoteSaver] Resetting isModified flag since no save needed');
-        setIsModified(false);
+         setIsModified(modificationVersionRef.current !== savedModificationVersion);
       }
 
       return { success: true, action: 'none' };
@@ -171,8 +174,7 @@ export function useNoteSaver(
         if (resetImageState) resetImageState();
         if (onDeleteSuccess) onDeleteSuccess();
 
-        // Reset modification state
-        setIsModified(false);
+        setIsModified(modificationVersionRef.current !== savedModificationVersion);
 
         result = { success: true, action: 'delete' };
       } else if (action === 'update') {
