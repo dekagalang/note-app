@@ -10,7 +10,10 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "install": "cd server && npm install && cd ../client && npm install",
     "test": "cd server && npm test && cd ../client && npm test",
-    "android:build": "cd client && npm run build && npx cap sync",
+    "android:build": "npm run android:build:debug",
+    "android:build:debug": "cd client && npm run android:build:debug",
+    "android:build:production": "cd client && npm run android:build:production",
+    "android:build:release": "cd client && npm run android:build:release",
     "android:open": "cd client && npx cap open android"
   },
   "dependencies": {
