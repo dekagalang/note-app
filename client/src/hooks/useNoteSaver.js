@@ -84,18 +84,14 @@ export function useNoteSaver(
       getCleanContent(noteData.content || '') === '';
     const hasImages = (noteData.images || []).length > 0;
 
-    // Check for empty note
-    if (isTextEmpty && !hasImages) {
-      // Only delete empty notes on forced saves (like manual close)
-      // Don't delete during auto-save to prevent accidental deletion while editing
-      if (isForced && noteData.id) {
-        console.log('[useNoteSaver] Empty existing note will be deleted on forced save:', noteData.id);
-        return { shouldSave: true, action: 'delete' };
-      }
-      // For auto-save or new notes, don't save empty notes
-      console.log('[useNoteSaver] Skipping save for empty note (auto-save or new note)');
-      return { shouldSave: false, action: 'none' };
-    }    // Check for modifications (if not forced)
+    // Delete an empty note only on a forced save (such as closing it). During
+    // auto-save, persist the empty content so deleting the last text is saved.
+    if (isTextEmpty && !hasImages && isForced && noteData.id) {
+      console.log('[useNoteSaver] Empty existing note will be deleted on forced save:', noteData.id);
+      return { shouldSave: true, action: 'delete' };
+    }
+
+    // Check for modifications (if not forced)
     if (!isForced && initialNote) {
       const titleChanged = noteData.title !== initialNote.title;
       const contentChanged = noteData.content !== initialNote.content;

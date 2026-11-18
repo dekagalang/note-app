@@ -1,7 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import Suggestion from '@tiptap/suggestion';
-import { PluginKey, Plugin } from 'prosemirror-state';
+import { PluginKey, Plugin } from '@tiptap/pm/state';
 
 // Handler for object mention clicks - can be set from outside
 let objectMentionClickHandler = (label) => {

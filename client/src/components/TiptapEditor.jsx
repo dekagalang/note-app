@@ -38,7 +38,7 @@ import { AIPlaceholderExtension } from './TiptapAIPlaceholderExtension';
 import { objectsApi } from '../services/api';
 import styled from 'styled-components';
 // Import DOMSerializer and Slice from prosemirror-model
-import { DOMParser, Slice, DOMSerializer } from 'prosemirror-model';
+import { DOMParser, Slice, DOMSerializer } from '@tiptap/pm/model';
 // Import your conversion function (adjust path if necessary)
 import { convertHtmlToPlainText } from '../utils/htmlToPlainText';
 import { formatPlainTextPasteToHtml } from '../utils/textToHtml.js';

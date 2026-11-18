@@ -1,5 +1,5 @@
 import { Mark, mergeAttributes } from '@tiptap/core';
-import { Plugin } from 'prosemirror-state';
+import { Plugin } from '@tiptap/pm/state';
 
 // Basic UUID regex with word boundaries (\b) added
 // This helps prevent matching UUIDs embedded within words or URLs without spacing.

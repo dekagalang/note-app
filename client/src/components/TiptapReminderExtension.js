@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import ReminderCard from './ReminderCard';
 
 export default Node.create({

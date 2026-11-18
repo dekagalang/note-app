@@ -2,7 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
 import Icon from "./Icons";
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { getInlineImageUrl } from '../services/inlineImageResolver';
 
 const ensurePlaceholderStyles = () => {

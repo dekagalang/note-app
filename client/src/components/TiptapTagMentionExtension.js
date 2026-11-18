@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
-import { PluginKey, Plugin } from 'prosemirror-state';
+import { PluginKey, Plugin } from '@tiptap/pm/state';
 
 // Handler for tag mention clicks - can be set from outside
 let tagMentionClickHandler = (tagName, tagId) => {

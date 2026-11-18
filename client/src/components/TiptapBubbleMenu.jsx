@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BubbleMenu } from '@tiptap/react';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection } from '@tiptap/pm/state';
 import styled from 'styled-components';
 import Icon from "./Icons";
 

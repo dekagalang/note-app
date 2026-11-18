@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection } from '@tiptap/pm/state';
 import api from '../services/api';
 import { scrollEditorSelectionIntoView, findScrollableAncestor } from '../utils/editorScroll';
 import { useToast } from '../contexts/ToastContext';

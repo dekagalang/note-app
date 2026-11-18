@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import api, { objectsApi, tagsApi } from '../services/api';
 import { useAutoTagging, AUTO_TAG_FEATURES } from '../contexts/AutoTaggingContext';
-import { DOMSerializer } from 'prosemirror-model';
+import { DOMSerializer } from '@tiptap/pm/model';
 
 export const useNoteContentActions = ({
     getEditor,

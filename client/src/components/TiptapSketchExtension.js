@@ -1,7 +1,7 @@
 import { Node } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import SketchNodeView from './SketchNodeView';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 
 export const TiptapSketchExtension = Node.create({
   name: 'inlineSketch',

@@ -1,6 +1,6 @@
 import Details from '@tiptap/extension-details';
 import { mergeAttributes } from '@tiptap/core';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 
 export const CustomDetails = Details.extend({
   addProseMirrorPlugins() {

@@ -6,8 +6,8 @@ import { formatPlainTextPasteToHtml } from '../utils/textToHtml.js';
 import { setOpenNoteHandler } from './TiptapNoteReferenceMark';
 import { useNotes } from "../contexts/NotesContext";
 import { useNavigation } from '../navigation'; // NEW: Use centralized navigation
-import { DOMParser } from 'prosemirror-model';
-import { NodeSelection } from 'prosemirror-state';
+import { DOMParser } from '@tiptap/pm/model';
+import { NodeSelection } from '@tiptap/pm/state';
 import { scrollEditorSelectionIntoView } from '../utils/editorScroll';
 import { prepareInlineImageInsert, evictInlineImageUrl } from '../services/inlineImageResolver';
 
