@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const Overlay = styled.div`
@@ -191,14 +191,6 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
   const dateOptions = getDateOptions(dateTime.date);
   const timeOptions = getTimeOptions(dateTime.time);
 
-  useEffect(() => {
-    const handleKeyDown = event => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
   const handleSave = async () => {
     if (!active) {
       await onSave({ enabled: false, reminderAt: null });
@@ -218,13 +210,8 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
   };
 
   return (
-    <Overlay onClick={event => event.target === event.currentTarget && onClose()}>
-      <Panel
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reminder-picker-title"
-        onClick={event => event.stopPropagation()}
-      >
+    <Overlay>
+      <Panel role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
         <Heading id="reminder-picker-title">Reminder</Heading>
         <ActiveRow>
           <input
