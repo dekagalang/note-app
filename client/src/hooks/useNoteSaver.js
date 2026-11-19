@@ -189,6 +189,8 @@ export function useNoteSaver(
           title: noteData.title,
           content: noteData.content,
           color: noteData.color,
+          reminder_at: noteData.reminder_at,
+          reminder_enabled: noteData.reminder_enabled,
         });
 
         result = { success: true, action: 'update', note: response };

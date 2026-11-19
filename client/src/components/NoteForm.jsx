@@ -1062,7 +1062,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
 
   const handleSaveReminder = useCallback(async ({ enabled, reminderAt: nextReminderAt }) => {
     if (enabled && isNativeReminderAvailable() && !(await requestReminderPermission())) {
-      showToast('Allow notifications to use note reminders.', { variant: 'warning' });
+      showToast('Allow notification access and, on Android, exact-alarm access to use reminders.', { variant: 'warning' });
       return false;
     }
     setReminderAt(enabled ? nextReminderAt : null);

@@ -8,6 +8,7 @@
     "server": "cd server && npm start",
     "client": "cd client && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm run build:prod --prefix client",
     "install": "cd server && npm install && cd ../client && npm install",
     "test": "cd server && npm test && cd ../client && npm test",
     "android:build": "npm run android:build:debug",

@@ -37,6 +37,12 @@ const ensureAndroidChannel = async () => {
   });
 };
 
+const hasExactAlarmPermission = async () => {
+  if (Capacitor.getPlatform() !== 'android') return true;
+  const status = await LocalNotifications.checkExactNotificationSetting();
+  return status.exact_alarm === 'granted';
+};
+
 export const getReminderPermissionStatus = async () => {
   if (!isNativeReminderAvailable()) return 'unavailable';
   const status = await LocalNotifications.checkPermissions();
@@ -51,6 +57,12 @@ export const requestReminderPermission = async () => {
       status = await LocalNotifications.requestPermissions();
     }
     if (status.display !== 'granted') return false;
+    if (Capacitor.getPlatform() === 'android') {
+      if (!(await hasExactAlarmPermission())) {
+        const exactAlarmStatus = await LocalNotifications.changeExactNotificationSetting();
+        if (exactAlarmStatus.exact_alarm !== 'granted') return false;
+      }
+    }
     await ensureAndroidChannel();
     return true;
   } catch (error) {
@@ -89,7 +101,7 @@ export const scheduleReminder = async (note) => {
       id,
       title: note.title?.trim() || 'itsnotes reminder',
       body: getNotificationBody(note) || 'Open your note to see the reminder.',
-      schedule: { at: reminderAt },
+      schedule: { at: reminderAt, allowWhileIdle: true },
       channelId: CHANNEL_ID,
       extra: { kind: 'note-reminder', noteId: note.id },
     }],
@@ -101,6 +113,7 @@ export const reconcileReminders = async (reminders) => {
   if (!isNativeReminderAvailable()) return;
   const permission = await LocalNotifications.checkPermissions();
   if (permission.display !== 'granted') return;
+  if (!(await hasExactAlarmPermission())) return;
 
   await ensureAndroidChannel();
   const activeReminders = (reminders || [])
