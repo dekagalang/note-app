@@ -16,6 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@capacitor-community/date-picker": "^7.1.0",
     "@capacitor/android": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "@capacitor/local-notifications": "^8.3.1",

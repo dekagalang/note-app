@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { Capacitor } from '@capacitor/core';
+import { DatePicker } from '@capacitor-community/date-picker';
 
 const Overlay = styled.div`
   position: fixed;
@@ -51,13 +53,14 @@ const Fields = styled.div`
   margin: 12px 0 20px;
 `;
 
-const Field = styled.label`
+const Field = styled.div`
   display: grid;
   gap: 6px;
   color: var(--text-color-secondary);
   font-size: 12px;
 
-  select {
+  select,
+  button {
     width: 100%;
     min-width: 0;
     min-height: 44px;
@@ -69,6 +72,9 @@ const Field = styled.label`
     border-radius: 8px;
     font: inherit;
     font-size: 15px;
+  }
+
+  select {
     appearance: none;
     -webkit-appearance: none;
     cursor: pointer;
@@ -77,16 +83,29 @@ const Field = styled.label`
     background-position: right 8px center;
   }
 
-  :root.light-theme & select {
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: left;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+
+  :root.light-theme & select,
+  :root.light-theme & button {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-opacity='0.9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   }
 
-  select:focus {
+  select:focus,
+  button:focus {
     outline: none;
     border-color: var(--foreground-color);
   }
 
-  select:disabled {
+  select:disabled,
+  button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -132,6 +151,7 @@ const Actions = styled.div`
 `;
 
 const pad = value => String(value).padStart(2, '0');
+const NATIVE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
 const toLocalInputs = value => {
   const date = value ? new Date(value) : new Date(Date.now() + 60 * 60 * 1000);
@@ -184,12 +204,42 @@ const getTimeOptions = selectedTime => {
   return times.sort().map(time => ({ value: time, label: time }));
 };
 
+const toNativeDateString = (date, time) => `${date}T${time}:00.000`;
+const toDateValue = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const toTimeValue = date => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
 export default function ReminderPicker({ value, enabled, onSave, onRemove, onClose }) {
   const [active, setActive] = useState(enabled === true);
   const [dateTime, setDateTime] = useState(() => toLocalInputs(value));
   const [error, setError] = useState('');
-  const dateOptions = getDateOptions(dateTime.date);
-  const timeOptions = getTimeOptions(dateTime.time);
+  const useNativePicker = Capacitor.isNativePlatform();
+  const dateOptions = useNativePicker ? [] : getDateOptions(dateTime.date);
+  const timeOptions = useNativePicker ? [] : getTimeOptions(dateTime.time);
+
+  const handleNativePicker = async mode => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    try {
+      const { value: selectedValue } = await DatePicker.present({
+        mode,
+        date: toNativeDateString(dateTime.date, dateTime.time),
+        timezone,
+        android: { format: NATIVE_DATE_FORMAT },
+        ios: { format: NATIVE_DATE_FORMAT },
+      });
+      if (!selectedValue) return;
+
+      const selectedDate = new Date(selectedValue);
+      if (Number.isNaN(selectedDate.getTime())) return;
+      setDateTime(previous => ({
+        ...previous,
+        [mode === 'date' ? 'date' : 'time']:
+          mode === 'date' ? toDateValue(selectedDate) : toTimeValue(selectedDate),
+      }));
+      setError('');
+    } catch (pickerError) {
+      console.error('[ReminderPicker] Failed to open native date/time picker:', pickerError);
+    }
+  };
 
   const handleSave = async () => {
     if (!active) {
@@ -210,7 +260,12 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
   };
 
   return (
-    <Overlay>
+    <Overlay
+      onClick={event => event.stopPropagation()}
+      onMouseDown={event => event.stopPropagation()}
+      onPointerDown={event => event.stopPropagation()}
+      onTouchStart={event => event.stopPropagation()}
+    >
       <Panel role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
         <Heading id="reminder-picker-title">Reminder</Heading>
         <ActiveRow>
@@ -223,24 +278,48 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
         </ActiveRow>
         <Fields>
           <Field>
-            Date
-            <select
-              value={dateTime.date}
-              onChange={event => setDateTime(prev => ({ ...prev, date: event.target.value }))}
-              disabled={!active}
-            >
-              {dateOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            <span>Date</span>
+            {useNativePicker ? (
+              <button
+                type="button"
+                aria-label="Choose reminder date"
+                onClick={() => handleNativePicker('date')}
+                disabled={!active}
+              >
+                {new Date(`${dateTime.date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </button>
+            ) : (
+              <select
+                aria-label="Reminder date"
+                value={dateTime.date}
+                onChange={event => setDateTime(prev => ({ ...prev, date: event.target.value }))}
+                disabled={!active}
+              >
+                {dateOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            )}
           </Field>
           <Field>
-            Time
-            <select
-              value={dateTime.time}
-              onChange={event => setDateTime(prev => ({ ...prev, time: event.target.value }))}
-              disabled={!active}
-            >
-              {timeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            <span>Time</span>
+            {useNativePicker ? (
+              <button
+                type="button"
+                aria-label="Choose reminder time"
+                onClick={() => handleNativePicker('time')}
+                disabled={!active}
+              >
+                {new Date(`2000-01-01T${dateTime.time}:00`).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              </button>
+            ) : (
+              <select
+                aria-label="Reminder time"
+                value={dateTime.time}
+                onChange={event => setDateTime(prev => ({ ...prev, time: event.target.value }))}
+                disabled={!active}
+              >
+                {timeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            )}
           </Field>
         </Fields>
         {error && <div role="alert" style={{ color: 'var(--error-color, #c23b3b)', fontSize: 13, marginBottom: 12 }}>{error}</div>}

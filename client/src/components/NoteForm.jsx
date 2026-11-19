@@ -100,7 +100,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
   const [reminderAt, setReminderAt] = useState(note?.reminder_at || null);
   const [reminderEnabled, setReminderEnabled] = useState(note?.reminder_enabled === true);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
-  const canSetLocalReminder = isNativeReminderAvailable();
+  const canSetLocalReminder = isNativeReminderAvailable() || import.meta.env.DEV;
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [titleFocused, setTitleFocused] = useState(false);
   const [isPinned, setIsPinned] = useState(note?.is_pinned || false);
@@ -1061,7 +1061,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
   );
 
   const handleSaveReminder = useCallback(async ({ enabled, reminderAt: nextReminderAt }) => {
-    if (enabled && !(await requestReminderPermission())) {
+    if (enabled && isNativeReminderAvailable() && !(await requestReminderPermission())) {
       showToast('Allow notifications to use note reminders.', { variant: 'warning' });
       return false;
     }
