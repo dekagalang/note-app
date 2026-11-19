@@ -48,30 +48,35 @@ const ActiveRow = styled.label`
 
 const Fields = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(100px, 0.55fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   margin: 12px 0 20px;
 `;
 
 const Field = styled.div`
   display: grid;
+  min-width: 0;
   gap: 6px;
   color: var(--text-color-secondary);
   font-size: 12px;
 
   select,
   button {
+    box-sizing: border-box;
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 8px 10px;
-    padding-right: 34px;
+    min-height: 40px;
+    padding: 7px 8px;
+    padding-right: 30px;
     color: var(--text-color);
     background-color: var(--input-bg-color, transparent);
     border: 1px solid var(--menu-item-separator-dark);
     border-radius: 8px;
     font: inherit;
-    font-size: 15px;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   select {
@@ -223,8 +228,8 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
         mode,
         date: toNativeDateString(dateTime.date, dateTime.time),
         timezone,
-        android: { format: NATIVE_DATE_FORMAT },
-        ios: { format: NATIVE_DATE_FORMAT },
+        android: { format: NATIVE_DATE_FORMAT, is24h: true },
+        ios: { format: NATIVE_DATE_FORMAT, is24h: true },
       });
       if (!selectedValue) return;
 
@@ -286,7 +291,7 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
                 onClick={() => handleNativePicker('date')}
                 disabled={!active}
               >
-                {new Date(`${dateTime.date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                {new Date(`${dateTime.date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
               </button>
             ) : (
               <select
@@ -308,7 +313,7 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
                 onClick={() => handleNativePicker('time')}
                 disabled={!active}
               >
-                {new Date(`2000-01-01T${dateTime.time}:00`).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                {dateTime.time}
               </button>
             ) : (
               <select
