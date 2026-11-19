@@ -228,6 +228,7 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
         mode,
         date: toNativeDateString(dateTime.date, dateTime.time),
         timezone,
+        is24h: true,
         android: { format: NATIVE_DATE_FORMAT, is24h: true },
         ios: { format: NATIVE_DATE_FORMAT, is24h: true },
       });
