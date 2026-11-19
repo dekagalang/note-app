@@ -218,8 +218,13 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
   };
 
   return (
-    <Overlay onMouseDown={event => event.target === event.currentTarget && onClose()}>
-      <Panel role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
+    <Overlay onClick={event => event.target === event.currentTarget && onClose()}>
+      <Panel
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reminder-picker-title"
+        onClick={event => event.stopPropagation()}
+      >
         <Heading id="reminder-picker-title">Reminder</Heading>
         <ActiveRow>
           <input
