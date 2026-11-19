@@ -99,6 +99,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
   const [color, setColor] = useState(note?.color || "default");
   const [reminderAt, setReminderAt] = useState(note?.reminder_at || null);
   const [reminderEnabled, setReminderEnabled] = useState(note?.reminder_enabled === true);
+  const reminderEditVersionRef = useRef(0);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
   const canSetLocalReminder = isNativeReminderAvailable();
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -796,6 +797,28 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
     setReminderEnabled(note.reminder_enabled === true);
   }, [note?.id, note?.isLoading, note?.reminder_at, note?.reminder_enabled]);
 
+  useEffect(() => {
+    if (!note?.id || note.isLoading) return undefined;
+
+    let isCurrent = true;
+    const editVersionAtLoad = reminderEditVersionRef.current;
+    notesApi.getNoteById(note.id)
+      .then(response => {
+        const latestNote = response?.note || response;
+        if (
+          !isCurrent ||
+          latestNote?.id !== note.id ||
+          reminderEditVersionRef.current !== editVersionAtLoad
+        ) return;
+
+        setReminderAt(latestNote.reminder_at || null);
+        setReminderEnabled(latestNote.reminder_enabled === true);
+      })
+      .catch(error => console.error(`[NoteForm] Failed to refresh reminder for note ${note.id}:`, error));
+
+    return () => { isCurrent = false; };
+  }, [note?.id, note?.isLoading]);
+
   // Live sync for color changes from external sources (e.g., socket updates from another window)
   // This effect only runs when note.color changes for the SAME note (not when note ID changes)
   const prevColorRef = useRef(note?.color);
@@ -1065,14 +1088,25 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
       showToast('Allow notification access and, on Android, exact-alarm access to use reminders.', { variant: 'warning' });
       return false;
     }
-    setReminderAt(enabled ? nextReminderAt : null);
-    setReminderEnabled(enabled);
+    reminderEditVersionRef.current += 1;
+    const reminderUpdate = {
+      reminder_at: enabled ? nextReminderAt : null,
+      reminder_enabled: enabled === true,
+    };
+    setReminderAt(reminderUpdate.reminder_at);
+    setReminderEnabled(reminderUpdate.reminder_enabled);
     markAsModified();
+    const saveResult = await saveNoteFromHook(reminderUpdate);
+    if (!saveResult?.success) {
+      showToast('Failed to save reminder. Please try again.', { variant: 'warning' });
+      return false;
+    }
     setShowReminderPicker(false);
     return true;
-  }, [markAsModified, showToast]);
+  }, [markAsModified, saveNoteFromHook, showToast]);
 
   const handleRemoveReminder = useCallback(() => {
+    reminderEditVersionRef.current += 1;
     setReminderAt(null);
     setReminderEnabled(false);
     markAsModified();
