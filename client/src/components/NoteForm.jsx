@@ -1097,7 +1097,6 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
     setReminderAt(reminderUpdate.reminder_at);
     setReminderEnabled(reminderUpdate.reminder_enabled);
     markAsModified();
-    setShowReminderPicker(false);
     saveNoteFromHook(reminderUpdate)
       .then(saveResult => {
         if (!saveResult?.success) {
@@ -1116,7 +1115,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
     setReminderAt(null);
     setReminderEnabled(false);
     markAsModified();
-    setShowReminderPicker(false);
+    return true;
   }, [markAsModified]);
 
   // Handle external content updates (e.g. from URL extraction)

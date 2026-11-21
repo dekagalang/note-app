@@ -1,8 +1,31 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import styled, { css, keyframes } from 'styled-components';
 import { Capacitor } from '@capacitor/core';
 import { DatePicker } from '@capacitor-community/date-picker';
 import { useBackButtonHandler } from '../../utils/backButtonManager';
+
+const ENTER_DURATION = 200;
+const EXIT_DURATION = 160;
+
+const overlayFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const overlayFadeOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const panelSlideDown = keyframes`
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const panelSlideUp = keyframes`
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+`;
 
 const Overlay = styled.div`
   position: fixed;
@@ -12,6 +35,13 @@ const Overlay = styled.div`
   align-items: flex-end;
   justify-content: center;
   background: rgba(0, 0, 0, 0.42);
+  animation: ${props => props.$closing
+    ? css`${overlayFadeOut} ${EXIT_DURATION}ms ease-in forwards`
+    : css`${overlayFadeIn} ${ENTER_DURATION}ms ease-out`};
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 
   @media (min-width: 600px) {
     align-items: center;
@@ -27,6 +57,13 @@ const Panel = styled.section`
   border: 1px solid var(--border-transparent);
   border-radius: 14px 14px 0 0;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+  animation: ${props => props.$closing
+    ? css`${panelSlideUp} ${EXIT_DURATION}ms ease-in forwards`
+    : css`${panelSlideDown} ${ENTER_DURATION}ms ease-out`};
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 
   @media (max-width: 768px) {
     background: ${props => props.$noteColor && props.$noteColor !== 'default'
@@ -224,6 +261,8 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
   const [active, setActive] = useState(enabled === true);
   const [dateTime, setDateTime] = useState(() => toLocalInputs(value));
   const [error, setError] = useState('');
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimerRef = useRef(null);
   const useNativePicker = Capacitor.isNativePlatform();
   const dateOptions = useNativePicker ? [] : getDateOptions(dateTime.date);
   const timeOptions = useNativePicker ? [] : getTimeOptions(dateTime.time);
@@ -254,9 +293,23 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
     }
   };
 
+  const closeWithAnimation = useCallback(afterClose => {
+    if (isClosing) return false;
+    setIsClosing(true);
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    closeTimerRef.current = window.setTimeout(() => {
+      onClose();
+      afterClose?.();
+    }, prefersReducedMotion ? 0 : EXIT_DURATION);
+    return true;
+  }, [isClosing, onClose]);
+
+  useEffect(() => () => window.clearTimeout(closeTimerRef.current), []);
+
   const handleSave = async () => {
     if (!active) {
-      await onSave({ enabled: false, reminderAt: null });
+      const saved = await onSave({ enabled: false, reminderAt: null });
+      if (saved !== false) closeWithAnimation();
       return;
     }
     if (!dateTime.date || !dateTime.time) {
@@ -269,25 +322,31 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
       return;
     }
     setError('');
-    await onSave({ enabled: true, reminderAt: localDate.toISOString() });
+    const saved = await onSave({ enabled: true, reminderAt: localDate.toISOString() });
+    if (saved !== false) closeWithAnimation();
   };
 
-  useBackButtonHandler(true, () => {
-    onClose();
+  const handleRemove = async () => {
+    closeWithAnimation(onRemove);
+  };
+
+  useBackButtonHandler(!isClosing, () => {
+    closeWithAnimation();
     return true;
   }, 200);
 
   return (
     <Overlay
+      $closing={isClosing}
       onClick={event => {
         event.stopPropagation();
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) closeWithAnimation();
       }}
       onMouseDown={event => event.stopPropagation()}
       onPointerDown={event => event.stopPropagation()}
       onTouchStart={event => event.stopPropagation()}
     >
-      <Panel $noteColor={noteColor} role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
+      <Panel $closing={isClosing} $noteColor={noteColor} role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
         <Heading id="reminder-picker-title">Reminder</Heading>
         <ActiveRow>
           <input
@@ -345,9 +404,9 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
         </Fields>
         {error && <div role="alert" style={{ color: 'var(--error-color, #c23b3b)', fontSize: 13, marginBottom: 12 }}>{error}</div>}
         <Actions>
-          {enabled && <button className="remove" type="button" onClick={onRemove}>Remove</button>}
+          {enabled && <button className="remove" type="button" onClick={handleRemove}>Remove</button>}
           <span className="spacer" />
-          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="button" onClick={closeWithAnimation}>Cancel</button>
           <button className="primary" type="button" onClick={handleSave}>Save</button>
         </Actions>
       </Panel>

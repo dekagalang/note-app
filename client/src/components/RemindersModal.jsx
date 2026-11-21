@@ -142,7 +142,6 @@ export default function RemindersModal({ onClose }) {
       return false;
     }
 
-    setSelectedReminder(null);
     try {
       await updateNote(reminder.id, {
         reminder_at: enabled ? reminderAt : null,
@@ -152,7 +151,6 @@ export default function RemindersModal({ onClose }) {
       return true;
     } catch (error) {
       console.error('[RemindersModal] Failed to save reminder:', error);
-      setSelectedReminder(reminder);
       showToast(error.response?.data?.message || 'Failed to save reminder. Please try again.', { variant: 'error' });
       return false;
     }
