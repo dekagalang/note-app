@@ -1088,6 +1088,7 @@ export const NoteActionBar = ({
                 onAddReminder={onAddReminder} // Pass new prop
                 onOpenReminderPicker={onOpenReminderPicker}
                 canSetLocalReminder={canSetLocalReminder}
+                reminderEnabled={reminderEnabled}
                 onInsertOCR={onInsertOCR} // Pass new prop
                 hasReminderIntent={hasReminderIntent} // Pass intent flag
                 onSummarizeWithAI={onSummarizeWithAI}

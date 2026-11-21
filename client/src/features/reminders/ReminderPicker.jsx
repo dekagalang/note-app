@@ -22,10 +22,16 @@ const Panel = styled.section`
   width: min(100%, 420px);
   padding: 20px;
   color: var(--text-color);
-  background: var(--mobile-note-bg-color, var(--background-color));
+  background: var(--dropdown-bg-color, var(--note-bg-color));
   border: 1px solid var(--border-transparent);
   border-radius: 14px 14px 0 0;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+
+  @media (max-width: 768px) {
+    background: ${props => props.$noteColor && props.$noteColor !== 'default'
+    ? `var(--note-color-${props.$noteColor})`
+    : 'var(--dropdown-bg-color, var(--note-bg-color))'};
+  }
 
   @media (min-width: 600px) {
     border-radius: 12px;
@@ -213,7 +219,7 @@ const toNativeDateString = (date, time) => `${date}T${time}:00.000`;
 const toDateValue = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const toTimeValue = date => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
-export default function ReminderPicker({ value, enabled, onSave, onRemove, onClose }) {
+export default function ReminderPicker({ value, enabled, onSave, onRemove, onClose, noteColor }) {
   const [active, setActive] = useState(enabled === true);
   const [dateTime, setDateTime] = useState(() => toLocalInputs(value));
   const [error, setError] = useState('');
@@ -267,12 +273,15 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
 
   return (
     <Overlay
-      onClick={event => event.stopPropagation()}
+      onClick={event => {
+        event.stopPropagation();
+        if (event.target === event.currentTarget) onClose();
+      }}
       onMouseDown={event => event.stopPropagation()}
       onPointerDown={event => event.stopPropagation()}
       onTouchStart={event => event.stopPropagation()}
     >
-      <Panel role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
+      <Panel $noteColor={noteColor} role="dialog" aria-modal="true" aria-labelledby="reminder-picker-title">
         <Heading id="reminder-picker-title">Reminder</Heading>
         <ActiveRow>
           <input

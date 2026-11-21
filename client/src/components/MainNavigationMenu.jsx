@@ -1,6 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Icon from './Icons';
+import { isNativeReminderAvailable } from '../features/reminders/reminderService';
 
 const slideRight = keyframes`
   from { transform: translateX(-60px); opacity: 0; }
@@ -244,6 +245,7 @@ const MainNavigationMenu = memo(({
   onClose,
   navigateTo,
   toggleTagsModal,
+  onOpenReminders,
   setIsSettingsModalOpen,
   logout
 }) => {
@@ -345,6 +347,17 @@ const MainNavigationMenu = memo(({
       
 
       <SidebarMenuList>
+        {isNativeReminderAvailable() && (
+          <SidebarMenuItem onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose();
+            onOpenReminders?.();
+          }}>
+            <Icon name="bell" size={20} />
+            <span>Reminders</span>
+          </SidebarMenuItem>
+        )}
         <SidebarMenuItem onMouseDown={(e) => {
           e.stopPropagation();
           e.preventDefault();

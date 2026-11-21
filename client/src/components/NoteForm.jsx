@@ -1096,12 +1096,17 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
     setReminderAt(reminderUpdate.reminder_at);
     setReminderEnabled(reminderUpdate.reminder_enabled);
     markAsModified();
-    const saveResult = await saveNoteFromHook(reminderUpdate);
-    if (!saveResult?.success) {
-      showToast('Failed to save reminder. Please try again.', { variant: 'warning' });
-      return false;
-    }
     setShowReminderPicker(false);
+    saveNoteFromHook(reminderUpdate)
+      .then(saveResult => {
+        if (!saveResult?.success) {
+          showToast('Failed to save reminder. Please try again.', { variant: 'warning' });
+        }
+      })
+      .catch(error => {
+        console.error('[NoteForm] Failed to save reminder:', error);
+        showToast('Failed to save reminder. Please try again.', { variant: 'warning' });
+      });
     return true;
   }, [markAsModified, saveNoteFromHook, showToast]);
 
@@ -2868,6 +2873,7 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
           onSave={handleSaveReminder}
           onRemove={handleRemoveReminder}
           onClose={() => setShowReminderPicker(false)}
+          noteColor={color}
         />
       )}
     </FormOverlay>

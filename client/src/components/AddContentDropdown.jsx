@@ -193,6 +193,26 @@ const RowTrailingAction = styled.span`
     }
   }
 `;
+
+const ReminderStatus = styled.span`
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--success-color, #2e9d66);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &::before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    content: '';
+  }
+`;
  
 const AddContentDropdown = ({
   isOpen,
@@ -207,6 +227,7 @@ const AddContentDropdown = ({
   onAddReminder = null,
   onOpenReminderPicker = null,
   canSetLocalReminder = false,
+  reminderEnabled = false,
   onSummarizeWithAI = null,
   onInsertOCR = null,
   clipboardUrlPreview = null,
@@ -588,7 +609,8 @@ const AddContentDropdown = ({
             data-add-content-dropdown="item"
           >
             <Icon name="bell" size={18} />
-            Set Reminder
+            <RowLabel>Set Reminder</RowLabel>
+            {reminderEnabled && <ReminderStatus aria-label="Reminder active">Active</ReminderStatus>}
           </DropdownItem>
           )}
           {aiEnabled && <>

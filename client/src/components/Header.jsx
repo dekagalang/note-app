@@ -19,6 +19,7 @@ import { CircleIconWrapper as SharedCircleIconWrapper, HighlightedButton as Shar
 import { useToast } from '../contexts/ToastContext'; // Global toast notifications
 import ThemeManager from '../utils/ThemeManager';
 import MainNavigationMenu from './MainNavigationMenu';
+import RemindersModal from './RemindersModal';
 import { formatPlainTextPasteToHtml, markdownToHtml } from '../utils/textToHtml.js';
 
 // Styled component for the selection count display
@@ -862,6 +863,7 @@ const Header = () => {
   const [lastExecutedSearchQuery, setLastExecutedSearchQuery] = useState(''); // Track last executed search
   const [newEmptyNote, setNewEmptyNote] = useState(null); // State to track newly created empty note
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false); // State for settings modal
+  const [isRemindersModalOpen, setIsRemindersModalOpen] = useState(false);
   const [isAutoAddingSpace, setIsAutoAddingSpace] = useState(false); // Flag to track auto-added spaces
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false); // Track search input focus
   const [isProcessing, setIsProcessing] = useState(false); // New processing state
@@ -1882,6 +1884,7 @@ const Header = () => {
         onClose={() => setIsMenuOpen(false)}
         navigateTo={navigateTo}
         toggleTagsModal={toggleTagsModal}
+        onOpenReminders={() => setIsRemindersModalOpen(true)}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
         logout={logout}
       />
@@ -2200,6 +2203,9 @@ const Header = () => {
 
       {isSettingsModalOpen && (
         <SettingsModal onClose={() => setIsSettingsModalOpen(false)} />
+      )}
+      {isRemindersModalOpen && (
+        <RemindersModal onClose={() => setIsRemindersModalOpen(false)} />
       )}
     </>
   );
