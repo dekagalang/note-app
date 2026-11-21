@@ -2204,7 +2204,7 @@ export const NotesProvider = ({ children }) => {
       // Then update server
       await notesApi.deleteNote(id);
         await cancelReminder(id);
-        await reconcileReminders(await notesApi.getUpcomingReminders());
+        await reconcileReminders(await notesApi.getActiveReminders());
       
       if (searchModeRef.current && searchQueryRef.current) {
         await handleSearch(searchQueryRef.current, true, false);

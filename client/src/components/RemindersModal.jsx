@@ -83,15 +83,18 @@ export default function RemindersModal({ onClose }) {
   const [reminders, setReminders] = useState([]);
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const { updateNote } = useNotes();
   const { showToast } = useToast();
 
   const loadReminders = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
-      setReminders(await notesApi.getUpcomingReminders());
+      setReminders(await notesApi.getActiveReminders());
     } catch (error) {
       console.error('[RemindersModal] Failed to load active reminders:', error);
+      setLoadError(true);
       showToast('Could not load active reminders.', { variant: 'error' });
     } finally {
       setLoading(false);
@@ -143,6 +146,8 @@ export default function RemindersModal({ onClose }) {
       >
         {loading ? (
           <EmptyState>Loading reminders...</EmptyState>
+        ) : loadError ? (
+          <EmptyState>Could not load reminders. Check your connection and try again.</EmptyState>
         ) : reminders.length === 0 ? (
           <EmptyState>No active reminders</EmptyState>
         ) : (

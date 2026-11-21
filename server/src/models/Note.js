@@ -1442,13 +1442,12 @@ class Note {
     return notes;
   }
 
-  static async findUpcomingReminders(now = new Date()) {
+  static async findActiveReminders() {
     return db('notes')
-      .select('id', 'title', 'plain_content', 'reminder_at', 'reminder_enabled')
+      .select('id', 'title', 'plain_content', 'color', 'reminder_at', 'reminder_enabled')
       .where('reminder_enabled', true)
       .where('is_deleted', false)
       .whereNotNull('reminder_at')
-      .where('reminder_at', '>', now)
       .orderBy('reminder_at', 'asc');
   }
 

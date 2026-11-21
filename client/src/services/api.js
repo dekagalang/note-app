@@ -102,7 +102,7 @@ export const notesApi = {
     return response.data;
   },
 
-  getUpcomingReminders: async () => {
+  getActiveReminders: async () => {
     const response = await api.get('/notes/reminders');
     return response.data.reminders || [];
   },

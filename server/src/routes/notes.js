@@ -222,10 +222,10 @@ router.get('/month-counts', async (req, res) => {
   }
 });
 
-// Get upcoming reminders for native-device reconciliation
+// Get active reminders for the reminder manager and native-device reconciliation
 router.get('/reminders', async (req, res) => {
   try {
-    const reminders = await Note.findUpcomingReminders();
+    const reminders = await Note.findActiveReminders();
     res.json({ reminders });
   } catch (error) {
     console.error('Error fetching upcoming reminders:', error);

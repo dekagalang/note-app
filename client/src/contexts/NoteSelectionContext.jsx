@@ -326,7 +326,7 @@ export const NoteSelectionProvider = ({ children }) => {
       ids.forEach(id => notesContextRef.current._updateOrRemoveNoteInState(id));
     };
     _executeBulkAction('restore', notesApi.bulkRestoreNotes, updateFn).then(async () => {
-      await reconcileReminders(await notesApi.getUpcomingReminders());
+      await reconcileReminders(await notesApi.getActiveReminders());
       // Show success toast after successful operation
       notesContextRef.current.notifyRestored(ids.length);
       // Refresh search count if in search mode

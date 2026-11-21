@@ -163,7 +163,7 @@ const AppContent = () => {
     });
 
     if (isNativeReminderAvailable()) {
-      notesApi.getUpcomingReminders()
+      notesApi.getActiveReminders()
         .then(reconcileReminders)
         .catch(error => console.error('[Reminder] Reconciliation failed:', error));
     }
