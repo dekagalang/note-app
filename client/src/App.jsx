@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import Header from './components/Header';
 import NotesList from './components/NotesList';
 import ListView from './components/ListView';
@@ -29,6 +31,7 @@ import { notesApi } from './services/api';
 import { isNativeReminderAvailable, reconcileReminders, setReminderOpenHandler } from './features/reminders/reminderService';
 import DemoBanner from './components/DemoBanner';
 import ColorPreloader from './components/ColorPreloader'; // Import color preloader for performance
+import { backButtonManager } from './utils/backButtonManager';
 
 function App() {
   return (
@@ -140,6 +143,7 @@ const AppContent = () => {
   console.log(`[AppContent Render #${renderCount.current} - ID: ${renderID.current}]`);
 
   const location = useLocation(); // Get location object
+  const navigate = useNavigate();
   const noteFormRef = useRef();
   const notesContext = useNotes(); // Get the entire notes context
   const {
@@ -156,6 +160,44 @@ const AppContent = () => {
   const { showQuickAccess, showNoteTabs, colorLabels, setAllColorLabels, layoutView, setPageBackgroundEnabled } = useUIPreferences();
   const { settings: serverSettings } = useSettings();
   const { closeNote, openNote } = useNavigation(); // Get note navigation from NavigationContext
+  const backButtonStateRef = useRef(null);
+  backButtonStateRef.current = { openedNote, closeNote, location, navigate };
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined;
+
+    let active = true;
+    let listener;
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (backButtonManager.handleBackButton()) return;
+
+      const current = backButtonStateRef.current;
+      if (current.openedNote) {
+        void current.closeNote('close-button');
+        return;
+      }
+
+      if (canGoBack) {
+        window.history.back();
+        return;
+      }
+
+      if (current.location.pathname !== '/' || current.location.search) {
+        current.navigate('/', { replace: true });
+        return;
+      }
+
+      void CapacitorApp.exitApp();
+    }).then(handle => {
+      if (active) listener = handle;
+      else void handle.remove();
+    }).catch(error => console.error('[BackButton] Failed to register listener:', error));
+
+    return () => {
+      active = false;
+      if (listener) void listener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const unregisterReminderHandler = setReminderOpenHandler((noteId) => {

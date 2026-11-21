@@ -6,6 +6,7 @@ import { useUIPreferences } from '../contexts/UIPreferencesContext';
 import { useTags } from '../contexts/TagsContext';
 import { notesApi } from '../services/api';
 import Icon from './Icons';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 import {
   DndContext,
   closestCenter,
@@ -66,6 +67,7 @@ const formatMonthSearchLabel = (searchQuery) => {
 // Tags Pill Component - now receives isDarkTheme as a prop
 const TagsPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useBackButtonHandler(isOpen, () => { setIsOpen(false); return true; }, 160);
   const pillRef = useRef(null);
   const panelRef = useRef(null);
 
@@ -183,6 +185,7 @@ const TagsPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) =
 // Colors Pill Component - now receives isDarkTheme as a prop
 const ColorsPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useBackButtonHandler(isOpen, () => { setIsOpen(false); return true; }, 160);
   const pillRef = useRef(null);
   const panelRef = useRef(null);
 
@@ -287,6 +290,7 @@ const ColorsPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange })
 // Folders Pill Component - now receives isDarkTheme as a prop
 const FoldersPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useBackButtonHandler(isOpen, () => { setIsOpen(false); return true; }, 160);
   const pillRef = useRef(null);
   const panelRef = useRef(null);
   const [folderInputValue, setFolderInputValue] = useState('');
@@ -575,6 +579,7 @@ const FoldersPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }
 // Saved Searches Pill Component - now receives isDarkTheme as a prop
 const SavedSearchesPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useBackButtonHandler(isOpen, () => { setIsOpen(false); return true; }, 160);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const pillRef = useRef(null);
   const panelRef = useRef(null);
@@ -753,6 +758,7 @@ const MONTH_LABEL = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 
 const CalendarPill = ({ isSearchActive, isMobileView, isDarkTheme, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useBackButtonHandler(isOpen, () => { setIsOpen(false); return true; }, 160);
   const [monthCounts, setMonthCounts] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const pillRef = useRef(null);

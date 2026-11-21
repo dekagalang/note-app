@@ -10,17 +10,43 @@ import { requestReminderPermission } from '../features/reminders/reminderService
 
 const ReminderList = styled.div`
   flex: 1;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
   padding: 8px 0 16px;
+`;
+
+const ReminderSection = styled.section`
+  min-width: 0;
+`;
+
+const SectionTitle = styled.h3`
+  margin: 12px 20px 4px;
+  color: var(--text-color-secondary);
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const SectionEmpty = styled.p`
+  margin: 0;
+  padding: 10px 20px 14px;
+  color: var(--text-color-secondary);
+  font-size: 13px;
 `;
 
 const ReminderItem = styled.button`
   display: flex;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   gap: 12px;
   padding: 14px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
   color: var(--text-color);
   text-align: left;
   background: transparent;
@@ -40,10 +66,11 @@ const ReminderItem = styled.button`
 
 const ReminderText = styled.span`
   display: flex;
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden;
 `;
 
 const ReminderTitle = styled.span`
@@ -55,6 +82,7 @@ const ReminderTitle = styled.span`
 `;
 
 const ReminderTime = styled.span`
+  overflow-wrap: anywhere;
   color: var(--text-color-secondary);
   font-size: 13px;
 `;
@@ -134,6 +162,21 @@ export default function RemindersModal({ onClose }) {
     handleSaveReminder({ enabled: false, reminderAt: null });
   }, [handleSaveReminder]);
 
+  const now = Date.now();
+  const upcomingReminders = reminders.filter(reminder => new Date(reminder.reminder_at).getTime() > now);
+  const pastDueReminders = reminders.filter(reminder => new Date(reminder.reminder_at).getTime() <= now);
+
+  const renderReminder = reminder => (
+    <ReminderItem key={reminder.id} type="button" onClick={() => setSelectedReminder(reminder)}>
+      <Icon name="bell" size={20} />
+      <ReminderText>
+        <ReminderTitle>{reminder.title?.trim() || 'Untitled note'}</ReminderTitle>
+        <ReminderTime>{formatReminderTime(reminder.reminder_at)}</ReminderTime>
+      </ReminderText>
+      <Icon name="arrow_right_caret" size={18} />
+    </ReminderItem>
+  );
+
   return (
     <>
       <Modal
@@ -152,16 +195,18 @@ export default function RemindersModal({ onClose }) {
           <EmptyState>No active reminders</EmptyState>
         ) : (
           <ReminderList>
-            {reminders.map(reminder => (
-              <ReminderItem key={reminder.id} type="button" onClick={() => setSelectedReminder(reminder)}>
-                <Icon name="bell" size={20} />
-                <ReminderText>
-                  <ReminderTitle>{reminder.title?.trim() || 'Untitled note'}</ReminderTitle>
-                  <ReminderTime>{formatReminderTime(reminder.reminder_at)}</ReminderTime>
-                </ReminderText>
-                <Icon name="arrow_right_caret" size={18} />
-              </ReminderItem>
-            ))}
+            <ReminderSection>
+              <SectionTitle>Upcoming</SectionTitle>
+              {upcomingReminders.length > 0
+                ? upcomingReminders.map(renderReminder)
+                : <SectionEmpty>No upcoming reminders</SectionEmpty>}
+            </ReminderSection>
+            <ReminderSection>
+              <SectionTitle>Past due</SectionTitle>
+              {pastDueReminders.length > 0
+                ? pastDueReminders.map(renderReminder)
+                : <SectionEmpty>No past-due reminders</SectionEmpty>}
+            </ReminderSection>
           </ReminderList>
         )}
       </Modal>

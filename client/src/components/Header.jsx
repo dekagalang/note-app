@@ -20,6 +20,7 @@ import { useToast } from '../contexts/ToastContext'; // Global toast notificatio
 import ThemeManager from '../utils/ThemeManager';
 import MainNavigationMenu from './MainNavigationMenu';
 import RemindersModal from './RemindersModal';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 import { formatPlainTextPasteToHtml, markdownToHtml } from '../utils/textToHtml.js';
 
 // Styled component for the selection count display
@@ -1127,6 +1128,11 @@ const Header = () => {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
   };
+
+  useBackButtonHandler(isSearchActive, () => {
+    exitSearchMode();
+    return true;
+  }, 120);
 
   // Close menus when clicking outside
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import Icon from './Icons';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const ENTER_DURATION = 200;
 const EXIT_DURATION = 160;
@@ -151,6 +152,11 @@ const Modal = forwardRef(({
     setClosing(true);
     setTimeout(() => onCloseRef.current?.(), EXIT_DURATION);
   }, [closing]);
+
+  useBackButtonHandler(true, () => {
+    requestClose();
+    return true;
+  }, 180);
 
   const handleOverlayMouseDown = guardDragSelection
     ? (e) => { if (e.target === e.currentTarget) e.stopPropagation(); }

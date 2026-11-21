@@ -8,6 +8,7 @@ import React, {
   useImperativeHandle,
 } from "react"; // Keep useRef
 import ReminderPicker from '../features/reminders/ReminderPicker';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import { useNotes } from "../contexts/NotesContext";
 import { useTags } from "../contexts/TagsContext";
@@ -2203,6 +2204,11 @@ const NoteForm = forwardRef(({ note, onClose: _onClose, isListView = false, onPr
     handleSearchToggle,
     dynamicActionBarsRef
   ]);
+
+  useBackButtonHandler(showSearch, () => {
+    customHandleSearchToggle();
+    return true;
+  }, 130);
 
   const findTextRange = (parentElement, searchText, matchIndex) => {
     if (!searchText || matchIndex < 0) return null;

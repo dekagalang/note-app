@@ -6,6 +6,7 @@ import { useUIPreferences } from '../contexts/UIPreferencesContext';
 import goodreadsFavicon from '../assets/images/favicon_goodreads.png';
 import imdbFavicon from '../assets/images/favicon_imdb.png';
 import tmdbFavicon from '../assets/images/favicon_tmdb.png';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const slideUp = keyframes`
   from { transform: translateY(60px); opacity: 0; }
@@ -246,6 +247,11 @@ const AddContentDropdown = ({
   const [isPositioned, setIsPositioned] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useBackButtonHandler(isOpen, () => {
+    onClose();
+    return true;
+  }, 140);
   // Whether the clipboard currently holds an image, so we can offer a direct
   // "paste to OCR" shortcut instead of forcing the user to save the file first.
   const [hasClipboardImage, setHasClipboardImage] = useState(false);

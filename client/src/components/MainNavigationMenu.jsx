@@ -2,6 +2,7 @@ import { memo, useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Icon from './Icons';
 import { isNativeReminderAvailable } from '../features/reminders/reminderService';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const slideRight = keyframes`
   from { transform: translateX(-60px); opacity: 0; }
@@ -251,6 +252,11 @@ const MainNavigationMenu = memo(({
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useBackButtonHandler(isOpen, () => {
+    onClose();
+    return true;
+  }, 150);
 
   useEffect(() => {
     if (isOpen) {

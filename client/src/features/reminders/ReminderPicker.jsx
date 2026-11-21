@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Capacitor } from '@capacitor/core';
 import { DatePicker } from '@capacitor-community/date-picker';
+import { useBackButtonHandler } from '../../utils/backButtonManager';
 
 const Overlay = styled.div`
   position: fixed;
@@ -270,6 +271,11 @@ export default function ReminderPicker({ value, enabled, onSave, onRemove, onClo
     setError('');
     await onSave({ enabled: true, reminderAt: localDate.toISOString() });
   };
+
+  useBackButtonHandler(true, () => {
+    onClose();
+    return true;
+  }, 200);
 
   return (
     <Overlay

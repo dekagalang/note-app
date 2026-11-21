@@ -3,6 +3,7 @@ import ReactDOM, { flushSync } from 'react-dom';
 import styled, { keyframes, css } from 'styled-components';
 import Icon from './Icons';
 import { useUIPreferences } from '../contexts/UIPreferencesContext';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const slideUp = keyframes`
   from { transform: translateY(60px); opacity: 0; }
@@ -384,6 +385,12 @@ export const ColorPicker = ({
             onClose();
         }
     };
+
+    useBackButtonHandler(shouldRender, () => {
+        if (mobileBottomSheet && isMobileView) handleCloseWithAnimation();
+        else onClose();
+        return true;
+    }, 170);
 
     return (
         <Portal>

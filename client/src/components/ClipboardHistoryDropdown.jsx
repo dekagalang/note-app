@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import Icon from './Icons';
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const DropdownOverlay = styled.div`
   position: fixed;
@@ -245,6 +246,11 @@ const ClipboardHistoryDropdown = ({
   onClose
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  useBackButtonHandler(isOpen, () => {
+    onClose?.();
+    return true;
+  }, 140);
 
   // Click outside to close on desktop
   React.useEffect(() => {

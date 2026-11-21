@@ -11,6 +11,7 @@ import { tagsApi, aiApi } from '../services/api';
 import { clearTagCache } from '../hooks/useNoteTagsModal'; // Import clearTagCache
 import Icon from './Icons'; // Assuming Icon component is correctly imported
 import SVGCheckbox from './SVGCheckbox'; // Assuming SVGCheckbox is correctly imported
+import { useBackButtonHandler } from '../utils/backButtonManager';
 
 const slideUp = keyframes`
   from { transform: translateY(60px); opacity: 0; }
@@ -445,6 +446,11 @@ export const TagPicker = ({
   forceAutoApply = false, // Force auto-apply regardless of settings (e.g. for NoteCard)
   onSuggestTags = null, // Callback for suggestion mode (instead of auto-apply)
 }) => {
+  useBackButtonHandler(isOpen, () => {
+    onClose();
+    return true;
+  }, 170);
+
   const { getFeatureSettings } = useAutoTagging();
   const { tags: allTags, loading: allTagsLoading, error: allTagsError, createTag } = useTags();
   const { setNotes, allNotesUnfiltered: allNotes, openedNote } = useNotes(); // Get allNotes from context
