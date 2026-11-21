@@ -4,8 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { DatePicker } from '@capacitor-community/date-picker';
 import { useBackButtonHandler } from '../../utils/backButtonManager';
 
-const ENTER_DURATION = 200;
-const EXIT_DURATION = 160;
+const ENTER_DURATION = 300;
+const EXIT_DURATION = 300;
 
 const overlayFadeIn = keyframes`
   from { opacity: 0; }
@@ -17,14 +17,14 @@ const overlayFadeOut = keyframes`
   to { opacity: 0; }
 `;
 
-const panelSlideDown = keyframes`
-  from { opacity: 0; transform: translateY(-12px); }
+const panelSlideUp = keyframes`
+  from { opacity: 0; transform: translateY(60px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const panelSlideUp = keyframes`
+const panelSlideDown = keyframes`
   from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 0; transform: translateY(60px); }
 `;
 
 const Overlay = styled.div`
@@ -58,8 +58,8 @@ const Panel = styled.section`
   border-radius: 14px 14px 0 0;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
   animation: ${props => props.$closing
-    ? css`${panelSlideUp} ${EXIT_DURATION}ms ease-in forwards`
-    : css`${panelSlideDown} ${ENTER_DURATION}ms ease-out`};
+    ? css`${panelSlideDown} ${EXIT_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1) forwards`
+    : css`${panelSlideUp} ${ENTER_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`};
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
